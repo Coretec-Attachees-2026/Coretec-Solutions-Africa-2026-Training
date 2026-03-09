@@ -92,7 +92,7 @@ table 50101 "Member"
                 MinimumAgeDate := CalcDate('-35Y', Today);
 
                 if "Date of Birth" > MinimumAgeDate then
-                    Error('Member must be at least 30 years old. Minimum Date of Birth allowed: %1', MinimumAgeDate);
+                    Error('Member must be at least 35 years old. Minimum Date of Birth allowed: %1', MinimumAgeDate);
             end;
         }
         // ---------- ADDRESS ----------
