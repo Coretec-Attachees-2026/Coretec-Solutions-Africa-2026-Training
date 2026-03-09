@@ -106,7 +106,8 @@ codeunit 50101 "Member Category Initialization"
         MemberCategory."Active" := true;
         MemberCategory.Insert();
 
-        // Let the admin know it worked
-        Message('Member Categories initialized successfully');
+        // Let the admin know it worked (only if there's a GUI session)
+        if GuiAllowed then
+            Message('Member Categories initialized successfully');
     end;
 }
