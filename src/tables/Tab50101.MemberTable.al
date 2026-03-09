@@ -87,12 +87,12 @@ table 50101 "Member"
                 if "Date of Birth" >= Today then
                     Error('Date of Birth cannot be today or in the future. Please enter a valid past date.');
 
-                // Must be at least 35 years old
-                // CalcDate('-35Y', Today) = "today minus 35 years"
-                MinimumAgeDate := CalcDate('-35Y', Today);
+                // Must be at least 18 years old
+                // CalcDate('18Y', Today) = "today minus 18 years"
+                MinimumAgeDate := CalcDate('-18Y', Today);
 
                 if "Date of Birth" > MinimumAgeDate then
-                    Error('Member must be at least 35 years old. Minimum Date of Birth allowed: %1', MinimumAgeDate);
+                    Error('Member must be at least 18 years old. Minimum Date of Birth allowed: %1', MinimumAgeDate);
             end;
         }
         // ---------- ADDRESS ----------

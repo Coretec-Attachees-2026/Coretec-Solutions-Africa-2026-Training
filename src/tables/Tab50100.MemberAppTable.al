@@ -87,14 +87,14 @@ table 50100 "Member Application"
                 if "Date of Birth" >= Today then
                     Error('Date of Birth cannot be today or in the future. Please enter a valid past date.');
 
-                // Rule 2: Applicant must be at least 35 years old
-                // CalcDate('-35Y', Today) calculates "35 years before today"
-                // The '-35Y' means: subtract 35 Years
-                MinimumAgeDate := CalcDate('-35Y', Today);
+                // Rule 2: Applicant must be at least 18 years old
+                // CalcDate('-18Y', Today) calculates "18 years before today"
+                // The '-18Y' means: subtract 18 Years
+                MinimumAgeDate := CalcDate('-18Y', Today);
 
                 // If their birth date is AFTER the cutoff, they're too young
                 if "Date of Birth" > MinimumAgeDate then
-                    Error('Applicant must be at least 35 years old. Minimum Date of Birth allowed: %1', MinimumAgeDate);
+                    Error('Applicant must be at least 18 years old. Minimum Date of Birth allowed: %1', MinimumAgeDate);
                 // %1 is a placeholder - it gets replaced with the actual date
             end;
         }
