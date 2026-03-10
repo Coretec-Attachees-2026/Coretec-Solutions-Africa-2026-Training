@@ -6,7 +6,7 @@
             "request": "launch",
             "type": "al",
             "environmentType": "OnPrem",
-            "server": "http://localhost:8080/BC260",
+            "server": "http://localhost",
             "serverInstance": "BC260",
             "authentication": "Windows",
             "startupObjectId": 22,
@@ -18,7 +18,6 @@
             "tenant": "default",
             "usePublicURLFromServer": true,
             "port": 7049,
-            "schemaUpdateMode": "Recreate"
         }
     ]
 }
