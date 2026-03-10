@@ -1,4 +1,5 @@
 # Compiled AL app output
+.snapshots/
 *.app
 
 # AL symbol packages (auto-downloaded)
