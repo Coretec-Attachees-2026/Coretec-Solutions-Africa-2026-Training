@@ -1,2 +1,14 @@
+# Compiled AL app output
 *.app
+
+# AL symbol packages (auto-downloaded)
 .alpackages/
+
+# VS Code AL cache (auto-generated, machine-specific)
+.vscode/.alcache/
+
+# AL local runtime tracking file
+.vscode/rad.json
+
+# VS Code local debug/launch config (machine-specific)
+.vscode/launch.json
