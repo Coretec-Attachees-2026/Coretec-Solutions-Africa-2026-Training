@@ -92,6 +92,17 @@ page 50102 "Member List"
                 Promoted = true;
                 PromotedCategory = Process;
             }
+
+            action("Edit Member")
+            {
+                Caption = 'Edit Member';
+                ToolTip = 'Edit the selected member''s details';
+                RunObject = page "Member Edit Card";
+                RunPageLink = "Member ID" = field("Member ID");
+                Image = Edit;
+                Promoted = true;
+                PromotedCategory = Process;
+            }
         }
     }
 }
