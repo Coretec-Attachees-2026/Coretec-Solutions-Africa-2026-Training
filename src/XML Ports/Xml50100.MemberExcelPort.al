@@ -1,9 +1,14 @@
 // ============================================================
-// XMLport 50100 - Member Excel Import/Export
+// XMLport 50100 - Member Import/Export
+// ============================================================
+// PURPOSE: Import and export Member data (Table 50101) to/from CSV files.
+//          CSV files open directly in Excel with proper columns.
+//          Use for: data migration, backups, integration with external systems.
+//
+// ============================================================
+// PART 1: WHAT IS AN XMLPORT?
 // ============================================================
 //
-// WHAT IS AN XMLPORT?
-// -------------------
 // An XMLport is a Business Central object used to IMPORT and EXPORT data
 // between a Business Central database and external files.
 // Despite the name "XMLport", it can handle multiple file formats:
@@ -19,39 +24,42 @@
 //   3. The FORMAT of the file (XML, CSV, tab-delimited, etc.)
 //   4. The DIRECTION of data flow (Import, Export, or Both)
 //
-// HOW AN XMLPORT WORKS:
-//   EXPORTING: Reads records from a BC table → writes them to a file
-//   IMPORTING: Reads data from a file → inserts/updates records in a BC table
+// An XMLport has THREE main parts:
 //
-// KEY CONCEPT - "Direction":
-//   Direction = Import  → only allows importing data INTO Business Central
-//   Direction = Export  → only allows exporting data OUT OF Business Central
-//   Direction = Both    → allows the user to choose import or export at runtime
+//   A) SCHEMA (the structure block below)
+//      - Defines the XML structure: root element → table element → fields
+//      - tableelement = one XML node per database TABLE (maps to records)
+//      - fieldelement = one XML node per FIELD (maps to table columns)
 //
-// KEY CONCEPT - "Format":
-//   Format = Xml           → produces/reads XML files
-//   Format = VariableText  → produces/reads delimited text files (CSV, TSV)
-//   Format = FixedText     → produces/reads fixed-width text files
+//   B) DIRECTION
+//      - Import: Read XML file → insert/update records in BC
+//      - Export: Read BC records → write to XML file
+//      - Both: User chooses on the Request Page
 //
-// KEY CONCEPT - "schema":
-//   The schema section defines the STRUCTURE of the file.
-//   - "textelement" = a wrapper node (required for the root)
-//   - "tableelement" = maps to a BC table (each record = one row in the file)
-//   - "fieldelement" = maps to a specific field in the table (each field = one column)
+//   C) TRIGGERS
+//      - OnPreXmlItem / OnPostXmlItem: Run before/after each record
+//      - OnAfterGetRecord: Custom logic when reading a record (export)
+//      - OnBeforeInsertRecord: Validate or modify before insert (import)
+//
+// WHEN THE XMLPORT RUNS:
+//   EXPORT: For each Member record → write XML nodes for each field
+//   IMPORT: For each <Member> node in XML → create/update Member record
 //
 // ============================================================
+// PART 2: PURPOSE IN THIS SACCO PROJECT (MEMBERS)
+// ============================================================
 //
-// PURPOSE IN THIS SACCO PROJECT:
-// ------------------------------
-// This XMLport allows SACCO administrators to:
+// This XMLport works with the Member table (Table 50101), which stores
+// active SACCO members — people whose membership applications have
+// been approved. It allows SACCO administrators to:
 //
-//   1. EXPORT MEMBERS TO EXCEL:
+//   1. EXPORT MEMBERS:
 //      - Generate a full list of all SACCO members for reporting
 //      - Share member data with auditors, regulators, or management
-//      - Create backups of member records in Excel format
+//      - Create backups of member records
 //      - Produce data for analysis outside Business Central
 //
-//   2. IMPORT MEMBERS FROM EXCEL:
+//   2. IMPORT MEMBERS:
 //      - Bulk-load member data during initial SACCO system setup
 //      - Migrate member records from legacy systems (e.g., spreadsheets)
 //      - Update member information in bulk (e.g., category changes)
@@ -66,81 +74,135 @@
 //     - Data sharing with partner organizations
 //     - Periodic backups of critical member data
 //
-// HOW TO USE THIS XMLPORT:
-//   1. In Business Central, search for "Member Excel Import/Export"
-//   2. Choose whether to Import or Export
-//   3. For EXPORT: Select filters (optional) → Download the file → Open in Excel
-//   4. For IMPORT: Prepare a tab-delimited .txt file with matching columns → Upload
+// MEMBER FIELDS INCLUDED (all 19 fields from Table 50101):
+//   Identification:  Member ID, Application ID
+//   Personal:        First Name, Last Name, Full Name
+//   Contact:         Email, Phone Number, Date of Birth
+//   Address:         Address, City, Postal Code, Country, ID Number
+//   Status:          Registration Date, Status
+//   Employment:      Occupation, Annual Income, Member Category
+//   Financial:       Account Balance
 //
-// FILE FORMAT:
-//   The exported file is tab-delimited text (.txt), which Excel can open directly.
-//   Each row represents one member. Each column maps to a field below.
-//   Column order: MemberID, ApplicationID, FirstName, LastName, FullName,
-//                 Email, PhoneNumber, DateOfBirth, Address, City, PostalCode,
-//                 Country, IDNumber, RegistrationDate, Status, Occupation,
-//                 AnnualIncome, MemberCategory, AccountBalance
+// ============================================================
+// PART 3: PROCESSING-ONLY / CODE-BASED USAGE
+// ============================================================
+//
+// You can run an XMLport from CODE instead of the UI:
+//
+//   IMPORT from a file:
+//     MemberXMLport.Import(File);
+//
+//   EXPORT to a file:
+//     MemberXMLport.Export(File);
+//
+//   RUN with Request Page (user picks file, Import/Export):
+//     Xmlport.Run(Xmlport::"Member Import/Export");
+//
+// Use from code when:
+//   - Scheduled Job Queue (e.g., nightly export to FTP)
+//   - Integration: import from web service, export to API
+//   - Batch processing in a codeunit
+//
+// ============================================================
+// PART 4: CSV STRUCTURE PRODUCED/CONSUMED (Opens in Excel)
+// ============================================================
+//
+// With Format = VariableText and FieldSeparator = ',', this XMLport
+// produces/expects CSV (Comma-Separated Values) files.
+// CSV files open directly in Microsoft Excel with each field in its
+// own column.
+//
+// EXPORTED CSV FORMAT (each row = one member, columns separated by commas):
+//
+//   "MEM-20260303-0001","APP-0001","John","Doe","John Doe","john@example.com","+254712345678","1990-05-15","123 Kenyatta Avenue","Nairobi","00100","KE","12345678","2026-03-03T10:00:00","Active","Software Engineer","1200000","REGULAR","50000"
+//
+// COLUMN ORDER (matches field order in schema):
+//   1. Member ID         2. Application ID    3. First Name
+//   4. Last Name         5. Full Name         6. Email
+//   7. Phone Number      8. Date of Birth     9. Address
+//  10. City             11. Postal Code      12. Country
+//  13. ID Number        14. Registration Date 15. Status
+//  16. Occupation       17. Annual Income    18. Member Category
+//  19. Account Balance
+//
+// HOW TO USE IN EXCEL:
+//   1. Export members using the "Export Members" button on the Member List
+//   2. The file downloads as Members.csv
+//   3. Double-click the .csv file — Excel opens it automatically
+//   4. Each member appears as a row, each field as a column
+//
+// TO IMPORT FROM EXCEL:
+//   1. Prepare data in Excel following the column order above
+//   2. Save as CSV (File → Save As → CSV UTF-8)
+//   3. Use the "Import Members" button on the Member List
+//   4. Select the .csv file — members are loaded into BC
 //
 // ============================================================
 
-xmlport 50100 "Member Excel Import/Export"
+xmlport 50100 "Member Import/Export"
 {
-    Caption = 'Member Excel Import/Export';
-
-    // Direction = Both → user can choose to Import or Export at runtime
-    // This is useful because the same XMLport serves both purposes
+    Caption = 'Member Import/Export';
     Direction = Both;
-
-    // Format = VariableText → the file is a delimited text file (not XML)
-    // This makes the output compatible with Excel (tab-separated values)
-    Format = VariableText;
-
-    // FormatEvaluate = Legacy → uses the older format evaluation method
-    // This ensures compatibility with how BC processes field values
-    FormatEvaluate = Legacy;
-
-    // TextEncoding = UTF8 → supports international characters (accents, symbols)
-    // Important for SACCO members with non-English names
-    TextEncoding = UTF8;
-
-    // FieldSeparator = '<TAB>' → columns are separated by tab characters
-    // Tab-separated files open cleanly in Excel without delimiter issues
-    FieldSeparator = '<TAB>';
-
-    // FieldDelimiter = '<None>' → field values are NOT wrapped in quotes
-    // This keeps the file clean and simple
-    FieldDelimiter = '<None>';
-
-    // UseRequestPage = true → shows a dialog before running
-    // The dialog lets the user set filters or options before import/export
+    Format = VariableText;       // Produces CSV (comma-separated) instead of XML
+    FieldSeparator = ',';        // Comma between each column
+    FieldDelimiter = '"';        // Wraps text values in double quotes
+    TextEncoding = UTF8;         // Supports special characters (e.g., accents)
     UseRequestPage = true;
 
-    // -------------------------------------------------------
-    // SCHEMA - Defines the structure of the import/export file
-    // -------------------------------------------------------
-    // The schema maps Business Central table fields to file columns.
-    // When EXPORTING: each field becomes a column in the output file
-    // When IMPORTING: each column in the file maps back to a table field
     schema
     {
-        // Root element - required wrapper for the data structure
-        // In VariableText format, this doesn't appear in the file output;
-        // it's just a structural requirement of the XMLport definition
-        textelement(RootNodeName)
+        // ---------------------------------------------------------------
+        // ROOT ELEMENT - Must be a textelement (required for XML format)
+        // ---------------------------------------------------------------
+        //
+        // The root wraps all Member records. Name it clearly (e.g., "Members").
+        // When exporting: BC creates <Members> and nests each <Member> inside.
+        // When importing: BC expects the same structure.
+        //
+        // ---------------------------------------------------------------
+
+        textelement(Members)
         {
-            // tableelement maps to the "Member" table (Table 50101)
-            // Each record in the Member table becomes one row in the file
-            // The variable name "Member" is used to reference fields below
-            tableelement(Member; "Member")
+            // -----------------------------------------------------------
+            // TABLE ELEMENT - Links to the Member table (Table 50101)
+            // -----------------------------------------------------------
+            //
+            // tableelement(VariableName; "Table Name")
+            //   - VariableName: Use in triggers to access current record
+            //   - "Table Name": The BC table (Member)
+            //
+            // XmlName: The tag name in the XML file (e.g., <Member>)
+            //
+            // On export: Loops through Member records, writes each as <Member>
+            // On import: Reads each <Member> node, inserts/updates a record
+            //
+            // -----------------------------------------------------------
+
+            tableelement(Member; Member)
             {
+                XmlName = 'Member';
+
+                // RequestPage filters - which members to export (ignored on import)
+                RequestFilterFields = "Member ID", "Status", "Member Category";
+
                 // ========================================
                 // IDENTIFICATION FIELDS
                 // ========================================
-                // Column 1: The unique member ID (e.g., MEM-20260303-0001)
+                //
+                // fieldelement(XmlTagName; TableVariable.FieldName)
+                //   - XmlTagName: The XML element name (e.g., <MemberID>)
+                //   - Field: The table field to read/write
+                //
+                // Order matters for readability; XML structure follows this order.
+                //
+                // ----------
+
+                // The unique member ID (e.g., MEM-20260303-0001)
                 // This is the primary key - used to identify each member
                 fieldelement(MemberID; Member."Member ID")
                 {
                 }
-                // Column 2: Links back to the original membership application
+                // Links back to the original membership application
                 // Shows which application created this member record
                 fieldelement(ApplicationID; Member."Application ID")
                 {
@@ -149,16 +211,14 @@ xmlport 50100 "Member Excel Import/Export"
                 // ========================================
                 // PERSONAL INFORMATION FIELDS
                 // ========================================
-                // Column 3: Member's first name
                 fieldelement(FirstName; Member."First Name")
                 {
                 }
-                // Column 4: Member's last name / surname
                 fieldelement(LastName; Member."Last Name")
                 {
                 }
-                // Column 5: Computed full name (First + Last)
-                // This field is auto-generated but included for readability in exports
+                // Computed full name (First + Last)
+                // Auto-generated but included for readability in exports
                 fieldelement(FullName; Member."Full Name")
                 {
                 }
@@ -166,15 +226,12 @@ xmlport 50100 "Member Excel Import/Export"
                 // ========================================
                 // CONTACT INFORMATION FIELDS
                 // ========================================
-                // Column 6: Member's email address
-                fieldelement(Email; Member."Email")
+                fieldelement(Email; Member.Email)
                 {
                 }
-                // Column 7: Member's phone number
                 fieldelement(PhoneNumber; Member."Phone Number")
                 {
                 }
-                // Column 8: Member's date of birth
                 // Must be at least 18 years old (validated by the Member table)
                 fieldelement(DateOfBirth; Member."Date of Birth")
                 {
@@ -183,23 +240,20 @@ xmlport 50100 "Member Excel Import/Export"
                 // ========================================
                 // ADDRESS FIELDS
                 // ========================================
-                // Column 9: Street address or P.O. Box
-                fieldelement(Address; Member."Address")
+                fieldelement(Address; Member.Address)
                 {
                 }
-                // Column 10: City or town
-                fieldelement(City; Member."City")
+                fieldelement(City; Member.City)
                 {
                 }
-                // Column 11: Postal/ZIP code
                 fieldelement(PostalCode; Member."Postal Code")
                 {
                 }
-                // Column 12: Country code (linked to BC's Country/Region table)
-                fieldelement(Country; Member."Country")
+                // Country code (linked to BC's Country/Region table)
+                fieldelement(Country; Member.Country)
                 {
                 }
-                // Column 13: National ID or Passport number
+                // National ID or Passport number
                 fieldelement(IDNumber; Member."ID Number")
                 {
                 }
@@ -207,29 +261,27 @@ xmlport 50100 "Member Excel Import/Export"
                 // ========================================
                 // STATUS & REGISTRATION FIELDS
                 // ========================================
-                // Column 14: Date and time the member was registered
                 // Set automatically when a membership application is approved
                 fieldelement(RegistrationDate; Member."Registration Date")
                 {
                 }
-                // Column 15: Current member status (Active, Inactive, Suspended, Closed)
+                // Current member status (Active, Inactive, Suspended, Closed)
                 // Uses Enum 50101 "Member Status"
-                fieldelement(Status; Member."Status")
+                fieldelement(Status; Member.Status)
                 {
                 }
 
                 // ========================================
                 // EMPLOYMENT FIELDS
                 // ========================================
-                // Column 16: Member's job title or profession
-                fieldelement(Occupation; Member."Occupation")
+                fieldelement(Occupation; Member.Occupation)
                 {
                 }
-                // Column 17: Member's yearly income (used for loan eligibility)
+                // Yearly income (used for loan eligibility assessment)
                 fieldelement(AnnualIncome; Member."Annual Income")
                 {
                 }
-                // Column 18: Category code (e.g., REGULAR, STUDENT, BUSINESS)
+                // Category code (e.g., REGULAR, STUDENT, BUSINESS)
                 // Links to the Member Category Master table
                 fieldelement(MemberCategory; Member."Member Category")
                 {
@@ -238,33 +290,99 @@ xmlport 50100 "Member Excel Import/Export"
                 // ========================================
                 // FINANCIAL FIELDS
                 // ========================================
-                // Column 19: Current savings account balance
+                // Current savings account balance
                 // This is a calculated/managed field - be cautious when importing
                 fieldelement(AccountBalance; Member."Account Balance")
                 {
                 }
+
+                // ===============================================================
+                // TRIGGERS - Run code at specific moments
+                // ===============================================================
+                //
+                // OnBeforeInsertRecord (Import only): Before inserting a new record
+                //   Use for: Validation, set default values, skip invalid rows
+                //
+                // OnAfterGetRecord (Export only): After reading each record
+                //   Use for: Skip records, transform data before export
+                //
+                // OnAfterInsertRecord (Import only): After inserting
+                //   Use for: Post-processing, update related tables
+                //
+                // ===============================================================
+
+                trigger OnBeforeInsertRecord()
+                begin
+                    // Runs for each <Member> node during IMPORT
+                    // Validate or modify data before it's inserted
+
+                    // EXAMPLE: Skip if Member ID is blank
+                    // if Member."Member ID" = '' then
+                    //     currXMLport.Skip();
+
+                    // EXAMPLE: Set Full Name from First + Last (if not in file)
+                    // if Member."Full Name" = '' then
+                    //     Member."Full Name" := Member."First Name" + ' ' + Member."Last Name";
+
+                    // PROCESSING-ONLY EXAMPLE: Log to a table or send notification
+                    // LogImportEntry(Member."Member ID");
+                end;
+
+                trigger OnAfterGetRecord()
+                begin
+                    // Runs for each Member record during EXPORT
+                    // Use to filter or transform data before writing to XML
+
+                    // EXAMPLE: Skip inactive members on export
+                    // if Member.Status = Member.Status::Inactive then
+                    //     currXMLport.Skip();
+
+                    // PROCESSING-ONLY EXAMPLE: Count exported records
+                    // ExportCount += 1;
+                end;
             }
         }
     }
 
-    // -------------------------------------------------------
-    // REQUEST PAGE
-    // -------------------------------------------------------
-    // The request page is the dialog that appears before the XMLport runs.
-    // It allows the user to set options or apply filters before importing/exporting.
-    // Currently it has an empty Options group - additional options can be added
-    // here in the future (e.g., checkboxes to skip certain fields during import).
+    // -----------------------------------------------------------------------
+    // REQUEST PAGE - Dialog before Import/Export
+    // -----------------------------------------------------------------------
+    //
+    // Users can:
+    //   - Choose Import or Export (when Direction = Both)
+    //   - Pick the file to import from / save export to
+    //   - Apply filters (from RequestFilterFields) to limit export data
+    //
+    // -----------------------------------------------------------------------
+
     requestpage
     {
         layout
         {
-            area(content)
+            area(Content)
             {
                 group(Options)
                 {
                     Caption = 'Options';
+                    // Add custom options, e.g.:
+                    // field(ReplaceExisting; ReplaceExisting)
+                    // {
+                    //     Caption = 'Replace existing members on import';
+                    //     ApplicationArea = All;
+                    // }
                 }
             }
         }
+        actions
+        {
+            // Default: Import/Export choice and file picker are automatic
+        }
     }
+
+    // -----------------------------------------------------------------------
+    // VARIABLES - For use in triggers
+    // -----------------------------------------------------------------------
+
+    var
+    // ExportCount: Integer;  // Uncomment for processing-only counting
 }

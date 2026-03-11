@@ -92,6 +92,55 @@ page 50102 "Member List"
                 Promoted = true;
                 PromotedCategory = Process;
             }
+
+            // Exports all members to a CSV file (opens in Excel)
+            action("Export Members")
+            {
+                Caption = 'Export Members to Excel (CSV)';
+                ApplicationArea = All;
+                Image = ExportFile;
+                Promoted = true;
+                PromotedCategory = Process;
+                ToolTip = 'Export member data to a CSV file that opens directly in Excel.';
+
+                trigger OnAction()
+                var
+                    TempBlob: Codeunit "Temp Blob";
+                    OutStr: OutStream;
+                    InStr: InStream;
+                    FileName: Text;
+                begin
+                    TempBlob.CreateOutStream(OutStr);
+                    Xmlport.Export(Xmlport::"Member Import/Export", OutStr);
+                    TempBlob.CreateInStream(InStr);
+                    FileName := 'Members.csv';
+                    DownloadFromStream(InStr, 'Export Members', '', 'CSV Files (*.csv)|*.csv', FileName);
+                end;
+            }
+
+            // Imports members from a CSV file (saved from Excel)
+            action("Import Members")
+            {
+                Caption = 'Import Members from Excel (CSV)';
+                ApplicationArea = All;
+                Image = Import;
+                Promoted = true;
+                PromotedCategory = Process;
+                ToolTip = 'Import member data from a CSV file. Save your Excel file as CSV first.';
+
+                trigger OnAction()
+                var
+                    InStr: InStream;
+                    FileName: Text;
+                    UploadResult: Boolean;
+                begin
+                    UploadResult := UploadIntoStream('Select CSV file to import', '', 'CSV Files (*.csv)|*.csv', FileName, InStr);
+                    if UploadResult then begin
+                        Xmlport.Import(Xmlport::"Member Import/Export", InStr);
+                        Message('Members imported successfully from %1.', FileName);
+                    end;
+                end;
+            }
         }
     }
 }
