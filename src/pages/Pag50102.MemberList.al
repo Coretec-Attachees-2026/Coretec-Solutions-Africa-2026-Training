@@ -83,14 +83,29 @@ page 50102 "Member List"
         {
             // Opens the Member Card page for the selected member
             // RunPageLink filters to show only the matching Member ID
-            action("View Details")
+            action(ViewDetails)
             {
                 Caption = 'View Details';
                 RunObject = page "Member Card";
                 RunPageLink = "Member ID" = field("Member ID");
                 Image = Open;
-                Promoted = true;
-                PromotedCategory = Process;
+            }
+            action(ExportMembers)
+            {
+                Caption = 'Export members';
+                Image = Import;
+                trigger OnAction()
+                begin
+                    Xmlport.Run(Xmlport::"Member XML port", true, false);
+                end;
+            }
+        }
+        area(Promoted) {
+            actionref("View details"; ViewDetails) {
+
+            }
+            actionref("Export members"; ExportMembers) {
+
             }
         }
     }
