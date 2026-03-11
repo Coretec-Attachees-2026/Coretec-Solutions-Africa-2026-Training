@@ -103,6 +103,36 @@ page 50102 "Member List"
                 Promoted = true;
                 PromotedCategory = Process;
             }
+
+            action("Export Members to Excel")
+            {
+                Caption = 'Export Members';
+                ToolTip = 'Export members to a file (opens in Excel)';
+                Image = Export;
+                Promoted = true;
+                PromotedCategory = Process;
+                trigger OnAction()
+                var
+                    MemberExportXMLport: Xmlport "Member Export";
+                begin
+                    MemberExportXMLport.Run();
+                end;
+            }
+
+            action("Import Members from Excel")
+            {
+                Caption = 'Import Members';
+                ToolTip = 'Import members from a file';
+                Image = Import;
+                Promoted = true;
+                PromotedCategory = Process;
+                trigger OnAction()
+                var
+                    MemberImportXMLport: Xmlport "Member Import";
+                begin
+                    MemberImportXMLport.Run();
+                end;
+            }
         }
     }
 }
