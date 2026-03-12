@@ -93,53 +93,50 @@ page 50102 "Member List"
                 PromotedCategory = Process;
             }
 
-            // Exports all members to a CSV file (opens in Excel)
+            // Exports members to an Excel (.xlsx) or CSV file.
+            // Shows a dropdown letting the user choose the format.
             action("Export Members")
             {
-                Caption = 'Export Members to Excel (CSV)';
+                Caption = 'Export Members';
                 ApplicationArea = All;
                 Image = ExportFile;
                 Promoted = true;
                 PromotedCategory = Process;
-                ToolTip = 'Export member data to a CSV file that opens directly in Excel.';
+                ToolTip = 'Export member data to an Excel (.xlsx) or CSV (.csv) file.';
 
                 trigger OnAction()
                 var
-                    TempBlob: Codeunit "Temp Blob";
-                    OutStr: OutStream;
-                    InStr: InStream;
-                    FileName: Text;
+                    ExcelMgt: Codeunit "Excel Import Export Mgt";
+                    FormatChoice: Integer;
                 begin
-                    TempBlob.CreateOutStream(OutStr);
-                    Xmlport.Export(Xmlport::"Member Import/Export", OutStr);
-                    TempBlob.CreateInStream(InStr);
-                    FileName := 'Members.csv';
-                    DownloadFromStream(InStr, 'Export Members', '', 'CSV Files (*.csv)|*.csv', FileName);
+                    // StrMenu shows a dropdown with numbered options.
+                    // Returns 1 for first option, 2 for second, 0 if cancelled.
+                    FormatChoice := StrMenu(
+                        'Excel (.xlsx),CSV (.csv)',
+                        1,
+                        'Choose export format');
+
+                    case FormatChoice of
+                        1:
+                            ExcelMgt.ExportMembersToExcel();
+                        2:
+                            ExcelMgt.ExportMembersToCSV();
+                    // 0 = user cancelled — do nothing
+                    end;
                 end;
             }
 
-            // Imports members from a CSV file (saved from Excel)
-            action("Import Members")
+            // Opens the Member Overview query in Analysis Mode
+            // where users can group, filter, and pivot member data
+            action("Analyze Members")
             {
-                Caption = 'Import Members from Excel (CSV)';
+                Caption = 'Analyze Members';
                 ApplicationArea = All;
-                Image = Import;
+                Image = AnalysisView;
                 Promoted = true;
-                PromotedCategory = Process;
-                ToolTip = 'Import member data from a CSV file. Save your Excel file as CSV first.';
-
-                trigger OnAction()
-                var
-                    InStr: InStream;
-                    FileName: Text;
-                    UploadResult: Boolean;
-                begin
-                    UploadResult := UploadIntoStream('Select CSV file to import', '', 'CSV Files (*.csv)|*.csv', FileName, InStr);
-                    if UploadResult then begin
-                        Xmlport.Import(Xmlport::"Member Import/Export", InStr);
-                        Message('Members imported successfully from %1.', FileName);
-                    end;
-                end;
+                PromotedCategory = Report;
+                ToolTip = 'Open the Member Overview query to analyze members by status, category, city, etc.';
+                RunObject = query "Member Overview";
             }
         }
     }

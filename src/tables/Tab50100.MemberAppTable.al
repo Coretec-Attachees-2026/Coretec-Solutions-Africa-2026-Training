@@ -122,7 +122,7 @@ table 50100 "Member Application"
         {
             Caption = 'ID/Passport Number';
         }
-        field(12; "Application Date"; DateTime)
+        field(12; "Application Date"; Date)
         {
             Caption = 'Application Date';
             Editable = false;
@@ -134,7 +134,7 @@ table 50100 "Member Application"
             // Uses our Enum 50100 which has: Pending, Approved, Rejected
             // The status is managed by code, not directly by the user
         }
-        field(14; "Approval Date"; DateTime)
+        field(14; "Approval Date"; Date)
         {
             Caption = 'Approval Date';
         }
@@ -157,6 +157,18 @@ table 50100 "Member Application"
             // Shows dropdown with categories like REGULAR, STUDENT, BUSINESS, etc.
             // These categories were created by the install codeunit (Cod50101)
             TableRelation = "Member Category Master".Code;
+
+            trigger OnValidate()
+            var
+                MemberCat: Record "Member Category Master";
+            begin
+                if "Member Category" = '' then
+                    exit;
+                if not MemberCat.Get("Member Category") then
+                    Error('Member Category %1 does not exist.', "Member Category");
+                if not MemberCat.Active then
+                    Error('Member Category %1 is inactive.', "Member Category");
+            end;
         }
     }
 
@@ -204,7 +216,7 @@ table 50100 "Member Application"
             AssignApplicationID();
 
         // Record when the application was created
-        "Application Date" := CurrentDateTime;
+        "Application Date" := Today;
 
         // All new applications start as "Pending"
         "Status" := Enum::"Member Application Status"::Pending;
@@ -251,7 +263,7 @@ table 50100 "Member Application"
               'Member Application Nos. is not configured. Open Member Application List, choose Member Setup, and set a No. Series (for example MEMAPPSEQ).');
 
         // Step 4: Get the next number from the series (e.g., '00001')
-        RawSequenceNo := NoSeries.GetNextNo(MemberSetup."Member Application Nos.", WorkDate());
+        RawSequenceNo := NoSeries.GetNextNo(MemberSetup."Member Application Nos.", Today);
         SequenceNoText := Format(RawSequenceNo);
 
         // Step 5: Convert to integer to validate it's a number
@@ -278,8 +290,8 @@ table 50100 "Member Application"
         SequencePart := CopyStr(PadStr('', MaxStrLen(SequencePart) - StrLen(SequenceNoText), '0') + SequenceNoText, 1, MaxStrLen(SequencePart));
 
         // Step 8: Build the final ID: APP-YYYYMMDD-#####
-        // Format(WorkDate(), 0, '<Year4><Month,2><Day,2>') produces e.g., '20260303'
-        ApplicationIDText := 'APP-' + Format(WorkDate(), 0, '<Year4><Month,2><Day,2>') + '-' + SequencePart;
+        // Format(Today, 0, '<Year4><Month,2><Day,2>') produces e.g., '20260303'
+        ApplicationIDText := 'APP-' + Format(Today, 0, '<Year4><Month,2><Day,2>') + '-' + SequencePart;
 
         // Step 9: Safety check - make sure it fits in the field
         if StrLen(ApplicationIDText) > MaxStrLen("Application ID") then

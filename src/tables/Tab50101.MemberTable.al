@@ -119,7 +119,7 @@ table 50101 "Member"
             Caption = 'ID/Passport Number';
         }
         // ---------- STATUS & REGISTRATION ----------
-        field(14; "Registration Date"; DateTime)
+        field(14; "Registration Date"; Date)
         {
             Caption = 'Registration Date';
             Editable = false;
@@ -146,6 +146,18 @@ table 50101 "Member"
             Caption = 'Member Category';
             // Links to Member Category Master (e.g., REGULAR, STUDENT, BUSINESS)
             TableRelation = "Member Category Master".Code;
+
+            trigger OnValidate()
+            var
+                MemberCat: Record "Member Category Master";
+            begin
+                if "Member Category" = '' then
+                    exit;
+                if not MemberCat.Get("Member Category") then
+                    Error('Member Category %1 does not exist.', "Member Category");
+                if not MemberCat.Active then
+                    Error('Member Category %1 is inactive.', "Member Category");
+            end;
         }
 
         // ---------- FINANCIALS ----------

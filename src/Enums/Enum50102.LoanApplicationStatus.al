@@ -3,7 +3,7 @@
 // ============================================================
 // PURPOSE: Defines the possible states a loan can be in.
 //
-// WORKFLOW:  Open  →  Pending Approval  →  Approved  →  Disbursed
+// WORKFLOW:  Open  →  Pending Approval  →  Approved  →  Disbursed  →  Partially Paid  →  Fully Paid
 //                                        ↘ Rejected
 //
 // "Open"              = Just created, member is still filling in details
@@ -11,6 +11,8 @@
 // "Approved"          = Loan officer said YES
 // "Rejected"          = Loan officer said NO
 // "Disbursed"         = Money has been sent out (posted to General Ledger)
+// "Partially Paid"    = Member has made some repayments but balance remains
+// "Fully Paid"        = Loan fully repaid, no remaining balance
 // ============================================================
 
 enum 50102 "Loan Application Status"
@@ -36,5 +38,13 @@ enum 50102 "Loan Application Status"
     value(4; Disbursed)
     {
         Caption = 'Disbursed';
+    }
+    value(5; "Partially Paid")
+    {
+        Caption = 'Partially Paid';
+    }
+    value(6; "Fully Paid")
+    {
+        Caption = 'Fully Paid';
     }
 }

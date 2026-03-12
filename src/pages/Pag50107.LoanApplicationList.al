@@ -133,6 +133,12 @@ page 50107 "Loan Application List"
                 StatusStyle := 'Unfavorable';
             Enum::"Loan Application Status"::Disbursed:
                 StatusStyle := 'Favorable';
+            // Partially Paid uses 'Attention' to signal ongoing repayment
+            Enum::"Loan Application Status"::"Partially Paid":
+                StatusStyle := 'Attention';
+            // Fully Paid uses 'Favorable' to indicate successful completion
+            Enum::"Loan Application Status"::"Fully Paid":
+                StatusStyle := 'Favorable';
         end;
     end;
 }

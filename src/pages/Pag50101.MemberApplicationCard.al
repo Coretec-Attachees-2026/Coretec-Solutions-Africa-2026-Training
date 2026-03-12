@@ -77,8 +77,10 @@ page 50101 "Member Application Card"
 
             // --- Section 2: Personal Information ---
             // User fills in the applicant's personal details
+            // Fields are locked once the application has been approved or rejected
             group("Personal Information")
             {
+                Editable = (rec.Status = Enum::"Member Application Status"::Pending);
                 field("First Name"; rec."First Name")
                 {
                     ToolTip = 'Specifies the applicant''s first name';
@@ -99,8 +101,10 @@ page 50101 "Member Application Card"
 
             // --- Section 3: Contact Information ---
             // How to reach the applicant
+            // Locked after approval/rejection to preserve the record
             group("Contact Information")
             {
+                Editable = (rec.Status = Enum::"Member Application Status"::Pending);
                 field("Phone Number"; rec."Phone Number")
                 {
                     ToolTip = 'Specifies the applicant''s phone number';
@@ -129,8 +133,10 @@ page 50101 "Member Application Card"
 
             // --- Section 4: Employment Information ---
             // Financial details for the application
+            // Locked after approval/rejection to preserve the record
             group("Employment Information")
             {
+                Editable = (rec.Status = Enum::"Member Application Status"::Pending);
                 field("Occupation"; rec."Occupation")
                 {
                     ToolTip = 'Specifies the applicant''s occupation';
@@ -204,13 +210,19 @@ page 50101 "Member Application Card"
                 trigger OnAction()
                 var
                     MemberMgmt: Codeunit "Member Management";
+                    ReasonDialog: Page "Rejection Reason Input";
                     RejectionReason: Text[250];
                 begin
-                    if Confirm('Do you want to reject this application?', false) then begin
-                        RejectionReason := 'Application rejected by administrator';
-                        MemberMgmt.RejectApplication(rec."Application ID", RejectionReason);
-                        CurrPage.Update(false);  // Refresh to show new status
-                    end;
+                    // Prompt the user for a custom rejection reason
+                    // using a StandardDialog page instead of a hardcoded string
+                    if ReasonDialog.RunModal() <> Action::OK then
+                        exit;
+                    RejectionReason := ReasonDialog.GetRejectionReason();
+                    if RejectionReason = '' then
+                        Error('Please provide a reason for rejection.');
+
+                    MemberMgmt.RejectApplication(rec."Application ID", RejectionReason);
+                    CurrPage.Update(false);  // Refresh to show new status
                 end;
             }
         }

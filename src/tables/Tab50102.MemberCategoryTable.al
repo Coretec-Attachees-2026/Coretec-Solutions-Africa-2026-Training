@@ -62,4 +62,21 @@ table 50102 "Member Category Master"
             // Each category has a unique Code as its primary key
         }
     }
+
+    // -------------------------------------------------------
+    // OnDelete Trigger - Prevent deletion if category is in use
+    // -------------------------------------------------------
+    trigger OnDelete()
+    var
+        Member: Record "Member";
+        MemberApp: Record "Member Application";
+    begin
+        Member.SetRange("Member Category", Code);
+        if not Member.IsEmpty() then
+            Error('Cannot delete category %1. Members are still assigned to it.', Code);
+
+        MemberApp.SetRange("Member Category", Code);
+        if not MemberApp.IsEmpty() then
+            Error('Cannot delete category %1. Applications are still using it.', Code);
+    end;
 }

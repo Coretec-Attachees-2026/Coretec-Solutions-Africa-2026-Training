@@ -94,7 +94,7 @@ codeunit 50100 "Member Management"
         Member."Postal Code" := MemberApp."Postal Code";
         Member."Country" := MemberApp."Country";
         Member."ID Number" := MemberApp."ID Number";
-        Member."Registration Date" := CurrentDateTime;  // Now
+        Member."Registration Date" := Today;  // Date of member creation
         Member."Status" := Enum::"Member Status"::Active;  // Start as Active
         Member."Occupation" := MemberApp."Occupation";
         Member."Annual Income" := MemberApp."Annual Income";
@@ -143,12 +143,15 @@ codeunit 50100 "Member Management"
 
         // Update the application status to Approved
         MemberApp.Status := Enum::"Member Application Status"::Approved;
-        MemberApp."Approval Date" := CurrentDateTime;
+        MemberApp."Approval Date" := Today;
         MemberApp.Modify();  // Save the changes
 
         // Create the member from the approved application
-        if TransferApplicationToMember(ApplicationID) then
+        if TransferApplicationToMember(ApplicationID) then begin
+            LogAuditEntry('Approved', 'Member Application', ApplicationID,
+                StrSubstNo('Application %1 approved and member created.', ApplicationID));
             Message('Application %1 approved and member created successfully', ApplicationID);
+        end;
     end;
 
     // -------------------------------------------------------
@@ -175,8 +178,11 @@ codeunit 50100 "Member Management"
         // Update status and save the reason
         MemberApp.Status := Enum::"Member Application Status"::Rejected;
         MemberApp."Rejection Reason" := RejectionReason;
-        MemberApp."Approval Date" := CurrentDateTime;  // Records when the decision was made
+        MemberApp."Approval Date" := Today;  // Records when the decision was made
         MemberApp.Modify();
+
+        LogAuditEntry('Rejected', 'Member Application', ApplicationID,
+            StrSubstNo('Application %1 rejected. Reason: %2', ApplicationID, RejectionReason));
 
         Message('Application %1 has been rejected', ApplicationID);
     end;
@@ -187,39 +193,67 @@ codeunit 50100 "Member Management"
     // PURPOSE: Creates a unique Member ID like "MEM-20260303-0001"
     //
     // HOW IT WORKS:
-    //   1. Counts how many members exist already
-    //   2. Uses that count + 1 as the sequence number
-    //   3. Builds ID: MEM-YYYYMMDD-#### (date + padded number)
+    //   1. Finds the LAST existing Member ID (sorted alphabetically)
+    //   2. Extracts the numeric suffix after the last '-'
+    //   3. Increments that number by 1 for the new ID
+    //   This avoids duplicate IDs if records are ever deleted,
+    //   because we base the sequence on the highest existing ID
+    //   rather than on the record count.
     //
     // KEY CONCEPT - "local procedure":
     //   "local" means only THIS codeunit can call this procedure.
     //   External code (pages, other codeunits) cannot use it.
-    //
-    // KEY CONCEPT - Format():
-    //   Format(Today, 0, '<Year4><Month,2><Day,2>') converts
-    //   today's date into text like "20260303"
-    //   Format(5, 0, '<Integer,4>') converts 5 into "0005" (padded)
-    //
-    // KEY CONCEPT - exit():
-    //   exit(value) returns a value from a procedure.
-    //   Similar to "return" in other programming languages.
     // -------------------------------------------------------
     local procedure GenerateMemberID(): Code[20]
     var
         Member: Record "Member";
-        MemberCount: Integer;
+        NextSeqNo: Integer;
+        LastID: Code[20];
+        DashPos: Integer;
+        SeqText: Text;
     begin
-        // Sort by Registration Date to find the last member
-        Member.SetCurrentKey("Registration Date");
-
-        // Count existing members (or start at 1 if none exist)
-        if Member.FindLast() then
-            MemberCount := Member.Count + 1
-        else
-            MemberCount := 1;
+        // Find the member with the highest Member ID (alphabetical sort)
+        Member.SetCurrentKey("Member ID");
+        if Member.FindLast() then begin
+            // Extract the numeric suffix after the last '-'
+            // e.g., from "MEM-20260303-0005" extract "0005"
+            LastID := Member."Member ID";
+            DashPos := StrLen(LastID);
+            while (DashPos > 0) and (LastID[DashPos] <> '-') do
+                DashPos -= 1;
+            if DashPos > 0 then begin
+                SeqText := CopyStr(Format(LastID), DashPos + 1);
+                if not Evaluate(NextSeqNo, SeqText) then
+                    NextSeqNo := 0;
+            end;
+            // Increment to get the next sequence number
+            NextSeqNo += 1;
+        end else
+            // No members exist yet — start at 1
+            NextSeqNo := 1;
 
         // Build and return the ID string
         // e.g., 'MEM-20260303-0001'
-        exit('MEM-' + Format(Today, 0, '<Year4><Month,2><Day,2>') + '-' + Format(MemberCount, 0, '<Integer,4>'));
+        exit('MEM-' + Format(Today, 0, '<Year4><Month,2><Day,2>') + '-' + Format(NextSeqNo, 0, '<Integer,4>'));
+    end;
+
+    // -------------------------------------------------------
+    // LogAuditEntry (local helper)
+    // -------------------------------------------------------
+    // PURPOSE: Creates an audit log record for tracking actions
+    //          taken on member applications.
+    // -------------------------------------------------------
+    local procedure LogAuditEntry(ActionType: Text[50]; DocumentType: Text[50]; DocumentNo: Code[20]; Description: Text[250])
+    var
+        AuditLog: Record "Application Audit Log";
+    begin
+        AuditLog.Init();
+        AuditLog."Date-Time" := CurrentDateTime;
+        AuditLog."User ID" := CopyStr(UserId, 1, 50);
+        AuditLog."Action Type" := ActionType;
+        AuditLog."Document Type" := DocumentType;
+        AuditLog."Document No." := DocumentNo;
+        AuditLog.Description := Description;
+        AuditLog.Insert(true);
     end;
 }

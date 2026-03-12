@@ -258,7 +258,7 @@ table 50103 "Loan Application"
             Error('Loan Application Nos. is not configured. Go to Member Setup and set a No. Series.');
 
         // Get next number from the series
-        RawNo := NoSeriesMgt.GetNextNo(MemberSetup."Loan Application Nos.", WorkDate());
+        RawNo := NoSeriesMgt.GetNextNo(MemberSetup."Loan Application Nos.", Today);
 
         // Convert to integer for formatting
         if not Evaluate(SeqInt, Format(RawNo)) then

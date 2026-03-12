@@ -229,18 +229,16 @@ page 50108 "Loan Application Card"
                 trigger OnAction()
                 var
                     LoanMgt: Codeunit "Loan Management";
+                    ReasonDialog: Page "Rejection Reason Input";
                     RejectionReason: Text[250];
                 begin
-                    // Ask the loan officer to type a reason for rejection
-                    // This is a simple input dialog
-                    RejectionReason := '';
-                    if RejectionReason = '' then begin
-                        // Use a page to get input - for simplicity we use a hardcoded prompt
-                        if not Confirm('Are you sure you want to reject loan %1?',
-                            false, Rec."Loan Application No.") then
-                            exit;
-                        RejectionReason := 'Loan application rejected by officer';
-                    end;
+                    // Prompt the loan officer for a custom rejection reason
+                    // using a StandardDialog page instead of hardcoded text
+                    if ReasonDialog.RunModal() <> Action::OK then
+                        exit;
+                    RejectionReason := ReasonDialog.GetRejectionReason();
+                    if RejectionReason = '' then
+                        Error('Please provide a reason for rejection.');
 
                     LoanMgt.RejectLoan(Rec, RejectionReason);
                     CurrPage.Update(false);
@@ -251,6 +249,35 @@ page 50108 "Loan Application Card"
             // Disbursement now happens automatically when you click "Approve & Disburse".
             // This simplifies the workflow from 4 steps to 3 steps:
             //   Open → Submit → Approve & Disburse (done!)
+
+            // ---- STEP 4: Record Repayment ----
+            action(RecordRepayment)
+            {
+                Caption = 'Record Repayment';
+                ToolTip = 'Record a repayment against this loan. Posts G/L entries and updates balance.';
+                Image = Payment;
+                Enabled = (Rec.Status = Enum::"Loan Application Status"::Disbursed) or
+                           (Rec.Status = Enum::"Loan Application Status"::"Partially Paid");
+
+                trigger OnAction()
+                var
+                    LoanMgt: Codeunit "Loan Management";
+                    RepaymentInput: Page "Loan Repayment Input";
+                    PaymentAmount: Decimal;
+                begin
+                    // Default to the monthly payment amount
+                    RepaymentInput.SetPaymentAmount(Rec."Monthly Payment");
+                    if RepaymentInput.RunModal() <> Action::OK then
+                        exit;
+
+                    PaymentAmount := RepaymentInput.GetPaymentAmount();
+                    if PaymentAmount <= 0 then
+                        Error('Payment amount must be greater than zero.');
+
+                    LoanMgt.RecordRepayment(Rec, PaymentAmount);
+                    CurrPage.Update(false);
+                end;
+            }
         }
 
         // ---- NAVIGATION: Link to related pages ----
@@ -263,7 +290,14 @@ page 50108 "Loan Application Card"
                 Image = LedgerEntries;
                 RunObject = page "Loan Ledger Entries";
                 RunPageLink = "Loan Application No." = field("Loan Application No.");
-                // RunPageLink filters the target page to only show entries for THIS loan
+            }
+            action(LoanRepayments)
+            {
+                Caption = 'Loan Repayments';
+                ToolTip = 'View all repayments for this loan.';
+                Image = PaymentHistory;
+                RunObject = page "Loan Repayment List";
+                RunPageLink = "Loan Application No." = field("Loan Application No.");
             }
         }
 
@@ -277,11 +311,13 @@ page 50108 "Loan Application Card"
                 actionref(SubmitForApproval_Promoted; SubmitForApproval) { }
                 actionref(Approve_Promoted; Approve) { }
                 actionref(Reject_Promoted; Reject) { }
+                actionref(RecordRepayment_Promoted; RecordRepayment) { }
             }
             group(Category_Navigate)
             {
                 Caption = 'Navigate';
                 actionref(LoanLedgerEntries_Promoted; LoanLedgerEntries) { }
+                actionref(LoanRepayments_Promoted; LoanRepayments) { }
             }
         }
     }
@@ -311,6 +347,10 @@ page 50108 "Loan Application Card"
             Enum::"Loan Application Status"::Rejected:
                 StatusStyle := 'Unfavorable';
             Enum::"Loan Application Status"::Disbursed:
+                StatusStyle := 'Favorable';
+            Enum::"Loan Application Status"::"Partially Paid":
+                StatusStyle := 'Attention';
+            Enum::"Loan Application Status"::"Fully Paid":
                 StatusStyle := 'Favorable';
         end;
     end;

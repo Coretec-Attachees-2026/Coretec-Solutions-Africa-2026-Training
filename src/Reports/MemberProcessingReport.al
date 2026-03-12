@@ -44,6 +44,8 @@ report 50101 "Member Details Update"
             end;
 
             trigger OnAfterGetRecord()
+            var
+                LoanApp: Record "Loan Application";
             begin
                 // Update only the fields where the user entered a new value
                 if NewPostalCode <> '' then
@@ -64,8 +66,20 @@ report 50101 "Member Details Update"
                 if NewOccupation <> '' then
                     Member."Occupation" := NewOccupation;
 
-                if UpdateStatus then
+                if UpdateStatus then begin
+                    // Prevent closing membership when the member has active loans
+                    // (Disbursed or Partially Paid) to protect data integrity
+                    if NewStatus = Enum::"Member Status"::Closed then begin
+                        LoanApp.SetRange("Member ID", Member."Member ID");
+                        LoanApp.SetFilter(Status, '%1|%2',
+                            Enum::"Loan Application Status"::Disbursed,
+                            Enum::"Loan Application Status"::"Partially Paid");
+                        if LoanApp.FindFirst() then
+                            Error('Cannot close member %1 — active loan %2 exists with status %3.',
+                                Member."Member ID", LoanApp."Loan Application No.", LoanApp.Status);
+                    end;
                     Member."Status" := NewStatus;
+                end;
 
                 Member.Modify(true);
                 RecordsUpdated += 1;

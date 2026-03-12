@@ -1,9 +1,17 @@
 // ============================================================
-// XMLport 50100 - Member Import/Export
+// XMLport 50100 - Member Export
 // ============================================================
-// PURPOSE: Import and export Member data (Table 50101) to/from CSV files.
+// PURPOSE: EXPORT-ONLY for Member data (Table 50101) to CSV files.
 //          CSV files open directly in Excel with proper columns.
-//          Use for: data migration, backups, integration with external systems.
+//          Use for: reporting, backups, audits, and data sharing.
+//
+// WHY EXPORT-ONLY?
+//   Members should NOT be imported directly into the Member table.
+//   The correct flow is:
+//     1. Import applicants via the Member Application XMLport (50101)
+//     2. Applications land as "Pending" for admin review
+//     3. Admin approves → system creates the Member record automatically
+//   This preserves the approval workflow and data integrity.
 //
 // ============================================================
 // PART 1: WHAT IS AN XMLPORT?
@@ -139,10 +147,10 @@
 //
 // ============================================================
 
-xmlport 50100 "Member Import/Export"
+xmlport 50100 "Member Export"
 {
-    Caption = 'Member Import/Export';
-    Direction = Both;
+    Caption = 'Member Export';
+    Direction = Export;          // Export-only — members cannot be imported directly
     Format = VariableText;       // Produces CSV (comma-separated) instead of XML
     FieldSeparator = ',';        // Comma between each column
     FieldDelimiter = '"';        // Wraps text values in double quotes
@@ -183,7 +191,7 @@ xmlport 50100 "Member Import/Export"
                 XmlName = 'Member';
 
                 // RequestPage filters - which members to export (ignored on import)
-                RequestFilterFields = "Member ID", "Status", "Member Category";
+                RequestFilterFields = "Member ID", "Status";
 
                 // ========================================
                 // IDENTIFICATION FIELDS
@@ -310,23 +318,6 @@ xmlport 50100 "Member Import/Export"
                 //   Use for: Post-processing, update related tables
                 //
                 // ===============================================================
-
-                trigger OnBeforeInsertRecord()
-                begin
-                    // Runs for each <Member> node during IMPORT
-                    // Validate or modify data before it's inserted
-
-                    // EXAMPLE: Skip if Member ID is blank
-                    // if Member."Member ID" = '' then
-                    //     currXMLport.Skip();
-
-                    // EXAMPLE: Set Full Name from First + Last (if not in file)
-                    // if Member."Full Name" = '' then
-                    //     Member."Full Name" := Member."First Name" + ' ' + Member."Last Name";
-
-                    // PROCESSING-ONLY EXAMPLE: Log to a table or send notification
-                    // LogImportEntry(Member."Member ID");
-                end;
 
                 trigger OnAfterGetRecord()
                 begin

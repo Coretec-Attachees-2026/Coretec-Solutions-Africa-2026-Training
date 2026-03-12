@@ -144,4 +144,140 @@ page 50103 "Member Card"
             }
         }
     }
+
+    actions
+    {
+        area(Processing)
+        {
+            // ---- Suspend Member ----
+            action(SuspendMember)
+            {
+                Caption = 'Suspend';
+                ToolTip = 'Suspend this member. Suspended members cannot take new loans.';
+                Image = Reject;
+                Enabled = (Rec.Status = Enum::"Member Status"::Active);
+
+                trigger OnAction()
+                var
+                    AuditLog: Record "Application Audit Log";
+                begin
+                    if not Confirm('Are you sure you want to suspend member %1 (%2)?',
+                        false, Rec."Member ID", Rec."Full Name") then
+                        exit;
+
+                    Rec.Status := Enum::"Member Status"::Suspended;
+                    Rec.Modify(true);
+
+                    // Log audit trail for member suspension
+                    AuditLog.Init();
+                    AuditLog."Date-Time" := CurrentDateTime;
+                    AuditLog."User ID" := CopyStr(UserId, 1, 50);
+                    AuditLog."Action Type" := 'Suspended';
+                    AuditLog."Document Type" := 'Member';
+                    AuditLog."Document No." := Rec."Member ID";
+                    AuditLog.Description := StrSubstNo('Member %1 (%2) suspended.', Rec."Member ID", Rec."Full Name");
+                    AuditLog.Insert(true);
+
+                    CurrPage.Update(false);
+                    Message('Member %1 has been suspended.', Rec."Member ID");
+                end;
+            }
+
+            // ---- Reactivate Member ----
+            action(ReactivateMember)
+            {
+                Caption = 'Reactivate';
+                ToolTip = 'Reactivate a suspended or inactive member.';
+                Image = Approve;
+                Enabled = (Rec.Status = Enum::"Member Status"::Suspended) or
+                           (Rec.Status = Enum::"Member Status"::Inactive);
+
+                trigger OnAction()
+                var
+                    AuditLog: Record "Application Audit Log";
+                begin
+                    if not Confirm('Are you sure you want to reactivate member %1 (%2)?',
+                        false, Rec."Member ID", Rec."Full Name") then
+                        exit;
+
+                    Rec.Status := Enum::"Member Status"::Active;
+                    Rec.Modify(true);
+
+                    // Log audit trail for member reactivation
+                    AuditLog.Init();
+                    AuditLog."Date-Time" := CurrentDateTime;
+                    AuditLog."User ID" := CopyStr(UserId, 1, 50);
+                    AuditLog."Action Type" := 'Reactivated';
+                    AuditLog."Document Type" := 'Member';
+                    AuditLog."Document No." := Rec."Member ID";
+                    AuditLog.Description := StrSubstNo('Member %1 (%2) reactivated.', Rec."Member ID", Rec."Full Name");
+                    AuditLog.Insert(true);
+
+                    CurrPage.Update(false);
+                    Message('Member %1 has been reactivated.', Rec."Member ID");
+                end;
+            }
+
+            // ---- Close Membership ----
+            action(CloseMembership)
+            {
+                Caption = 'Close Membership';
+                ToolTip = 'Permanently close this membership. This cannot be undone.';
+                Image = Close;
+                Enabled = (Rec.Status <> Enum::"Member Status"::Closed);
+
+                trigger OnAction()
+                var
+                    AuditLog: Record "Application Audit Log";
+                    LoanApp: Record "Loan Application";
+                begin
+                    // Check for outstanding loan balance
+                    if Rec."Account Balance" < 0 then
+                        Error('Cannot close membership while member has an outstanding loan balance of %1.', Rec."Account Balance");
+
+                    // Check for any active loans (Disbursed or Partially Paid)
+                    // A member might have a zero account balance but still have
+                    // loans in progress that haven't been fully repaid.
+                    LoanApp.SetRange("Member ID", Rec."Member ID");
+                    LoanApp.SetFilter(Status, '%1|%2',
+                        Enum::"Loan Application Status"::Disbursed,
+                        Enum::"Loan Application Status"::"Partially Paid");
+                    if LoanApp.FindFirst() then
+                        Error('Cannot close membership — member has active loan %1 with status %2.',
+                            LoanApp."Loan Application No.", LoanApp.Status);
+
+                    if not Confirm('Are you sure you want to CLOSE membership for %1 (%2)?\\This action cannot be undone.',
+                        false, Rec."Member ID", Rec."Full Name") then
+                        exit;
+
+                    Rec.Status := Enum::"Member Status"::Closed;
+                    Rec.Modify(true);
+
+                    // Log audit trail for membership closure
+                    AuditLog.Init();
+                    AuditLog."Date-Time" := CurrentDateTime;
+                    AuditLog."User ID" := CopyStr(UserId, 1, 50);
+                    AuditLog."Action Type" := 'Closed';
+                    AuditLog."Document Type" := 'Member';
+                    AuditLog."Document No." := Rec."Member ID";
+                    AuditLog.Description := StrSubstNo('Membership closed for %1 (%2).', Rec."Member ID", Rec."Full Name");
+                    AuditLog.Insert(true);
+
+                    CurrPage.Update(false);
+                    Message('Membership for %1 has been closed.', Rec."Member ID");
+                end;
+            }
+        }
+
+        area(Promoted)
+        {
+            group(Category_Process)
+            {
+                Caption = 'Process';
+                actionref(SuspendMember_Promoted; SuspendMember) { }
+                actionref(ReactivateMember_Promoted; ReactivateMember) { }
+                actionref(CloseMembership_Promoted; CloseMembership) { }
+            }
+        }
+    }
 }

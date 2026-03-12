@@ -198,6 +198,65 @@ page 50100 "Member Application List"
                     end;
                 end;
             }
+
+            // --- Action: Import Applications from CSV ---
+            // Imports applicant data from a CSV file (Excel → Save As → CSV)
+            // Each row becomes a new application with:
+            //   - Auto-generated Application ID (APP-YYYYMMDD-#####)
+            //   - Status = Pending (ready for admin approval)
+            //   - Application Date = now
+            action("Import Applications")
+            {
+                Caption = 'Import Applications';
+                ApplicationArea = All;
+                Image = Import;
+                Promoted = true;
+                PromotedCategory = Process;
+                ToolTip = 'Import member applications from an Excel (.xlsx) or CSV (.csv) file. Each row creates a new Pending application.';
+
+                trigger OnAction()
+                var
+                    ExcelMgt: Codeunit "Excel Import Export Mgt";
+                    FormatChoice: Integer;
+                begin
+                    // StrMenu shows a dropdown with numbered options.
+                    // Returns 1 for first option, 2 for second, 0 if cancelled.
+                    FormatChoice := StrMenu(
+                        'Excel (.xlsx),CSV (.csv)',
+                        1,
+                        'Choose import format');
+
+                    case FormatChoice of
+                        1:
+                            ExcelMgt.ImportApplicationsFromExcel();
+                        2:
+                            ExcelMgt.ImportApplicationsFromCSV();
+                    // 0 = user cancelled — do nothing
+                    end;
+                    CurrPage.Update(false);
+                end;
+            }
+
+            // --- Action: Download Import Template ---
+            // Downloads an empty .xlsx file with the correct 13-column
+            // headers and a sample data row so users know exactly what
+            // format to use when preparing import data.
+            action("Download Import Template")
+            {
+                Caption = 'Download Import Template';
+                ApplicationArea = All;
+                Image = Template;
+                Promoted = true;
+                PromotedCategory = Process;
+                ToolTip = 'Download an Excel template with headers and sample data for importing member applications.';
+
+                trigger OnAction()
+                var
+                    ExcelMgt: Codeunit "Excel Import Export Mgt";
+                begin
+                    ExcelMgt.DownloadImportTemplate();
+                end;
+            }
         }
     }
 }

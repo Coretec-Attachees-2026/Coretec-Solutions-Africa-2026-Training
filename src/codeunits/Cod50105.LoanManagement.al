@@ -69,7 +69,9 @@ codeunit 50105 "Loan Management"
         // --- All checks passed, change the status ---
         LoanApp.Status := Enum::"Loan Application Status"::"Pending Approval";
         LoanApp.Modify(true);
-        // Modify(true) saves the record AND runs any OnModify triggers
+
+        LogAuditEntry('Submitted', 'Loan Application', LoanApp."Loan Application No.",
+            StrSubstNo('Loan %1 submitted for approval. Amount: %2', LoanApp."Loan Application No.", LoanApp."Loan Amount"));
 
         Message('Loan %1 has been submitted for approval.', LoanApp."Loan Application No.");
     end;
@@ -85,10 +87,19 @@ codeunit 50105 "Loan Management"
     // NOW    (1 click):   Approve (posting happens automatically)
     // -------------------------------------------------------
     procedure ApproveLoan(var LoanApp: Record "Loan Application")
+    var
+        Member: Record "Member";
     begin
         // Can only approve loans that are "Pending Approval"
         if LoanApp.Status <> Enum::"Loan Application Status"::"Pending Approval" then
             Error('Only loans with status "Pending Approval" can be approved.\Current status: %1', LoanApp.Status);
+
+        // Verify the member is still Active before approving the loan.
+        // A member could have been suspended/closed after submitting.
+        Member.Get(LoanApp."Member ID");
+        if Member.Status <> Enum::"Member Status"::Active then
+            Error('Cannot approve loan — member %1 is not Active.\Current member status: %2',
+                LoanApp."Member ID", Member.Status);
 
         // Step A: Mark the loan as Approved
         LoanApp.Status := Enum::"Loan Application Status"::Approved;
@@ -124,6 +135,9 @@ codeunit 50105 "Loan Management"
         LoanApp."Rejection Reason" := RejectionReason;
         LoanApp.Modify(true);
 
+        LogAuditEntry('Rejected', 'Loan Application', LoanApp."Loan Application No.",
+            StrSubstNo('Loan %1 rejected. Reason: %2', LoanApp."Loan Application No.", RejectionReason));
+
         Message('Loan %1 has been rejected.\Reason: %2', LoanApp."Loan Application No.", RejectionReason);
     end;
 
@@ -151,6 +165,7 @@ codeunit 50105 "Loan Management"
         GenJnlLine: Record "Gen. Journal Line";
         GenJnlPostLine: Codeunit "Gen. Jnl.-Post Line";
         LoanLedgerEntry: Record "Loan Ledger Entry";
+        Member: Record "Member";
         DocumentNo: Code[20];
     begin
         // --- VALIDATION ---
@@ -240,9 +255,211 @@ codeunit 50105 "Loan Management"
         LoanApp."Document No." := DocumentNo;
         LoanApp.Modify(true);
 
+        // =============================================
+        // UPDATE MEMBER ACCOUNT BALANCE
+        // =============================================
+        // Disbursing a loan decreases the member's account balance
+        // (they now owe money to the SACCO)
+        Member.Get(LoanApp."Member ID");
+        Member."Account Balance" -= LoanApp."Loan Amount";
+        Member.Modify(true);
+
+        LogAuditEntry('Disbursed', 'Loan Application', LoanApp."Loan Application No.",
+            StrSubstNo('Loan %1 disbursed. Amount: %2, Document No.: %3',
+                LoanApp."Loan Application No.", LoanApp."Loan Amount", DocumentNo));
+
         Message('Loan %1 has been posted successfully!\Amount: %2\Document No.: %3',
             LoanApp."Loan Application No.",
             LoanApp."Loan Amount",
             DocumentNo);
+    end;
+
+    // -------------------------------------------------------
+    // STEP 5: Record Repayment
+    // -------------------------------------------------------
+    // PURPOSE: Records a loan repayment from a member.
+    //
+    // WHAT HAPPENS:
+    //   1. Validates the loan is in a repayable state (Disbursed or Partially Paid)
+    //   2. Calculates how much goes to interest vs principal
+    //   3. Posts G/L entries (reverse of disbursement)
+    //   4. Creates a Loan Repayment record
+    //   5. Updates member Account Balance
+    //   6. Updates loan status (Partially Paid or Fully Paid)
+    //
+    // SIMPLE INTEREST ALLOCATION:
+    //   Interest portion = (Payment / Total Repayment) × Total Interest
+    //   Principal portion = Payment - Interest portion
+    // -------------------------------------------------------
+    procedure RecordRepayment(var LoanApp: Record "Loan Application"; PaymentAmount: Decimal)
+    var
+        MemberSetup: Record "Member Setup";
+        GenJnlLine: Record "Gen. Journal Line";
+        GenJnlPostLine: Codeunit "Gen. Jnl.-Post Line";
+        LoanRepayment: Record "Loan Repayment";
+        Member: Record "Member";
+        DocumentNo: Code[20];
+        TotalPaid: Decimal;
+        RemainingBefore: Decimal;
+        RemainingAfter: Decimal;
+        InterestPortion: Decimal;
+        PrincipalPortion: Decimal;
+    begin
+        // --- VALIDATION ---
+        if not (LoanApp.Status in [Enum::"Loan Application Status"::Disbursed,
+                                    Enum::"Loan Application Status"::"Partially Paid"]) then
+            Error('Only disbursed or partially paid loans can receive repayments.\Current status: %1', LoanApp.Status);
+
+        if PaymentAmount <= 0 then
+            Error('Payment amount must be greater than zero.');
+
+        // Calculate how much has been paid so far
+        TotalPaid := GetTotalRepayments(LoanApp."Loan Application No.");
+        RemainingBefore := LoanApp."Total Repayment" - TotalPaid;
+
+        if RemainingBefore <= 0 then
+            Error('This loan has already been fully repaid.');
+
+        // Don't allow overpayment
+        if PaymentAmount > RemainingBefore then
+            Error('Payment amount (%1) exceeds outstanding balance (%2).', PaymentAmount, RemainingBefore);
+
+        // --- GET SETUP (G/L Accounts) ---
+        MemberSetup.GetOrCreateSetup();
+
+        // --- CALCULATE INTEREST vs PRINCIPAL SPLIT ---
+        if LoanApp."Total Repayment" > 0 then
+            InterestPortion := Round(PaymentAmount * (LoanApp."Total Interest" / LoanApp."Total Repayment"), 0.01)
+        else
+            InterestPortion := 0;
+        PrincipalPortion := PaymentAmount - InterestPortion;
+
+        RemainingAfter := RemainingBefore - PaymentAmount;
+
+        // --- GENERATE DOCUMENT NUMBER ---
+        // Append a unique repayment counter (e.g., '-R001', '-R002')
+        // to avoid duplicate G/L document numbers across repayments
+        DocumentNo := CopyStr(
+            LoanApp."Loan Application No." + '-R' + Format(GetRepaymentCount(LoanApp."Loan Application No.") + 1, 0, '<Integer,3>'),
+            1, MaxStrLen(DocumentNo));
+
+        // =============================================
+        // POST ENTRY 1: DEBIT - Bank (money coming in)
+        // =============================================
+        GenJnlLine.Init();
+        GenJnlLine."Posting Date" := Today;
+        GenJnlLine."Document No." := DocumentNo;
+        GenJnlLine."Account Type" := GenJnlLine."Account Type"::"G/L Account";
+        GenJnlLine."Account No." := MemberSetup."Loan Disbursement Account";
+        GenJnlLine.Description := StrSubstNo('Loan repayment - %1', LoanApp."Member Name");
+        GenJnlLine.Validate(Amount, PaymentAmount);
+        GenJnlLine."Source Code" := 'GENJNL';
+        GenJnlLine."System-Created Entry" := true;
+        GenJnlPostLine.RunWithCheck(GenJnlLine);
+
+        // =============================================
+        // POST ENTRY 2: CREDIT - Loans Receivable (debt decreasing)
+        // =============================================
+        GenJnlLine.Init();
+        GenJnlLine."Posting Date" := Today;
+        GenJnlLine."Document No." := DocumentNo;
+        GenJnlLine."Account Type" := GenJnlLine."Account Type"::"G/L Account";
+        GenJnlLine."Account No." := MemberSetup."Loans Receivable Account";
+        GenJnlLine.Description := StrSubstNo('Loan repayment - %1', LoanApp."Member Name");
+        GenJnlLine.Validate(Amount, -PaymentAmount);
+        GenJnlLine."Source Code" := 'GENJNL';
+        GenJnlLine."System-Created Entry" := true;
+        GenJnlPostLine.RunWithCheck(GenJnlLine);
+
+        // =============================================
+        // CREATE LOAN REPAYMENT RECORD
+        // =============================================
+        LoanRepayment.Init();
+        LoanRepayment."Loan Application No." := LoanApp."Loan Application No.";
+        LoanRepayment."Member ID" := LoanApp."Member ID";
+        LoanRepayment."Member Name" := LoanApp."Member Name";
+        LoanRepayment."Payment Date" := Today;
+        LoanRepayment."Amount Paid" := PaymentAmount;
+        LoanRepayment."Principal Applied" := PrincipalPortion;
+        LoanRepayment."Interest Applied" := InterestPortion;
+        LoanRepayment."Remaining Balance" := RemainingAfter;
+        LoanRepayment."Document No." := DocumentNo;
+        LoanRepayment.Description := StrSubstNo('Loan repayment for %1', LoanApp."Loan Application No.");
+        LoanRepayment.Insert(true);
+
+        // =============================================
+        // UPDATE MEMBER ACCOUNT BALANCE
+        // =============================================
+        Member.Get(LoanApp."Member ID");
+        Member."Account Balance" += PaymentAmount;
+        Member.Modify(true);
+
+        // =============================================
+        // UPDATE LOAN STATUS
+        // =============================================
+        if RemainingAfter <= 0 then
+            LoanApp.Status := Enum::"Loan Application Status"::"Fully Paid"
+        else
+            LoanApp.Status := Enum::"Loan Application Status"::"Partially Paid";
+        LoanApp.Modify(true);
+
+        LogAuditEntry('Repayment', 'Loan Application', LoanApp."Loan Application No.",
+            StrSubstNo('Repayment of %1 recorded for loan %2. Remaining: %3',
+                PaymentAmount, LoanApp."Loan Application No.", RemainingAfter));
+
+        Message('Payment of %1 recorded for loan %2.\Remaining balance: %3',
+            PaymentAmount,
+            LoanApp."Loan Application No.",
+            RemainingAfter);
+    end;
+
+    // -------------------------------------------------------
+    // GetTotalRepayments (local helper)
+    // -------------------------------------------------------
+    // PURPOSE: Calculates the sum of all repayments made against a loan.
+    // Uses CalcSums for efficient server-side aggregation
+    // instead of looping through records manually.
+    // -------------------------------------------------------
+    local procedure GetTotalRepayments(LoanApplicationNo: Code[20]): Decimal
+    var
+        LoanRepayment: Record "Loan Repayment";
+    begin
+        LoanRepayment.SetRange("Loan Application No.", LoanApplicationNo);
+        LoanRepayment.CalcSums("Amount Paid");
+        exit(LoanRepayment."Amount Paid");
+    end;
+
+    // -------------------------------------------------------
+    // GetRepaymentCount (local helper)
+    // -------------------------------------------------------
+    // PURPOSE: Counts how many repayment records exist for a loan.
+    // Used to generate unique Document No. suffixes (e.g., '-R001').
+    // -------------------------------------------------------
+    local procedure GetRepaymentCount(LoanApplicationNo: Code[20]): Integer
+    var
+        LoanRepayment: Record "Loan Repayment";
+    begin
+        LoanRepayment.SetRange("Loan Application No.", LoanApplicationNo);
+        exit(LoanRepayment.Count);
+    end;
+
+    // -------------------------------------------------------
+    // LogAuditEntry (local helper)
+    // -------------------------------------------------------
+    // PURPOSE: Creates an audit log record for tracking actions
+    //          taken on loan applications.
+    // -------------------------------------------------------
+    local procedure LogAuditEntry(ActionType: Text[50]; DocumentType: Text[50]; DocumentNo: Code[20]; Description: Text[250])
+    var
+        AuditLog: Record "Application Audit Log";
+    begin
+        AuditLog.Init();
+        AuditLog."Date-Time" := CurrentDateTime;
+        AuditLog."User ID" := CopyStr(UserId, 1, 50);
+        AuditLog."Action Type" := ActionType;
+        AuditLog."Document Type" := DocumentType;
+        AuditLog."Document No." := DocumentNo;
+        AuditLog.Description := Description;
+        AuditLog.Insert(true);
     end;
 }

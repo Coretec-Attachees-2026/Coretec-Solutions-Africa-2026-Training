@@ -1,0 +1,11 @@
+First Name,Last Name,Email,Phone Number,Date of Birth,Address,City,Postal Code,Country,ID Number,Occupation,Annual Income,Member Category
+James,Mwangi,james.mwangi@gmail.com,+254712345678,1990-11-15,123 Kenyatta Avenue,Nairobi,00100,KE,32456789,Software Engineer,1200000,REGULAR
+Grace,Akinyi,grace.akinyi@yahoo.com,+254798765432,1985-12-22,45 Oginga Odinga Street,Kisumu,40100,KE,28765432,Teacher,720000,REGULAR
+Peter,Ochieng,peter.ochieng@outlook.com,+254723456789,1992-01-10,78 Moi Avenue,Mombasa,80100,KE,34567890,Accountant,960000,BUSINESS
+Sarah,Wanjiku,sarah.wanjiku@gmail.com,+254711223344,2000-02-05,12 Kimathi Street,Nakuru,20100,KE,39876543,University Student,0,STUDENT
+David,Otieno,david.otieno@hotmail.com,+254745678901,1978-11-30,56 Haile Selassie Avenue,Eldoret,30100,KE,23456789,Farmer,480000,REGULAR
+Faith,Njeri,faith.njeri@gmail.com,+254700112233,1988-12-18,34 Uhuru Highway,Thika,01000,KE,30123456,Nurse,840000,REGULAR
+Michael,Kamau,michael.kamau@company.co.ke,+254733445566,1975-01-25,89 Jomo Kenyatta Road,Nyeri,10100,KE,21098765,Business Owner,3600000,BUSINESS
+Lucy,Adhiambo,lucy.adhiambo@gmail.com,+254766778899,1995-02-14,23 Tom Mboya Street,Nairobi,00200,KE,36789012,Graphic Designer,600000,REGULAR
+Joseph,Kiprop,joseph.kiprop@yahoo.com,+254722334455,1982-11-08,67 Ronald Ngala Street,Kericho,20200,KE,26543210,Retired Teacher,360000,SENIOR
+Anne,Moraa,anne.moraa@outlook.com,+254755667788,1997-12-20,45 Koinange Street,Kisii,40200,KE,38901234,Pharmacist,1080000,REGULAR
