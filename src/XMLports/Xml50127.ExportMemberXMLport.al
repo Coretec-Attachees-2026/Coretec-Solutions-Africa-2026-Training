@@ -1,10 +1,10 @@
-xmlport 50127 "Member XML port"
+xmlport 50127 "Export Member XMLport"
 {
     Caption = 'Member XML port';
-    Format = VariableText;
+    Format = Xml;
     Direction = Export;
-    FieldSeparator = ',';
-    TextEncoding = UTF8;
+    // FieldSeparator = ',';
+    // TextEncoding = UTF8;
     schema
     {
         textelement(RootNodeName)

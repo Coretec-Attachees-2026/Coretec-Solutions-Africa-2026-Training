@@ -96,7 +96,16 @@ page 50102 "Member List"
                 Image = Import;
                 trigger OnAction()
                 begin
-                    Xmlport.Run(Xmlport::"Member XML port", true, false);
+                    Xmlport.Run(Xmlport::"Export Member XMLport", true, false);
+                end;
+            }
+            action(ImportMembers)
+            {
+                Caption = 'Import Members';
+                Image = Export;
+                trigger OnAction()
+                begin
+                    Xmlport.Run(Xmlport::"Import Members XMLport", true, true);
                 end;
             }
         }
@@ -105,6 +114,9 @@ page 50102 "Member List"
 
             }
             actionref("Export members"; ExportMembers) {
+
+            }
+            actionref("Import members"; ImportMembers) {
 
             }
         }
