@@ -29,9 +29,6 @@ query 50129 "Member Query"
             column(Status;Status) {
 
             }
-            filter(MyFinter; "Account Balance") {
-
-            }
         }
     }
     
