@@ -1,15 +1,11 @@
-// ============================================================
-// XMLport 50113 - Member Import
-// ============================================================
-// PURPOSE: Import Member data (Table 50101) from files.
-// ============================================================
-
 xmlport 50113 "Member Import"
 {
     Caption = 'Member Import';
     Direction = Import;
     Format = VariableText;
-    UseRequestPage = true;
+    FieldSeparator = ',';        // ← Match the CSV comma separator
+    FieldDelimiter = '"';        // ← Handle quoted fields
+    UseRequestPage = false;      // ← Disabled since codeunit handles file picking
 
     schema
     {
@@ -18,6 +14,7 @@ xmlport 50113 "Member Import"
             tableelement(Member; "Member")
             {
                 XmlName = 'Member';
+                AutoSave = false;       // ← We control when/how records are saved
 
                 // IDENTIFICATION
                 fieldelement(MemberID; Member."Member ID") { }
@@ -50,22 +47,33 @@ xmlport 50113 "Member Import"
                 // FINANCIALS
                 fieldelement(AccountBalance; Member."Account Balance") { }
 
-                // ===============================================================
-                // TRIGGERS - Run at specific moments during import
-                // ===============================================================
-
                 trigger OnBeforeInsertRecord()
+                var
+                    ExistingMember: Record Member;
                 begin
-                    // Runs for each record during IMPORT
-                    // Validate or modify data before it enters BC
+                    // Skip rows with blank Member ID
+                    if Member."Member ID" = '' then
+                        CurrXMLport.Skip();
 
-                    // EXAMPLE: Skip blank Member IDs
-                    // if Member."Member ID" = '' then
-                    //     CurrXMLport.Skip();
+                    // Auto-populate Full Name if not provided
+                    if Member."Full Name" = '' then
+                        Member."Full Name" := Member."First Name" + ' ' + Member."Last Name";
 
-                    // EXAMPLE: Auto-populate Full Name if not provided
-                    // if Member."Full Name" = '' then
-                    //     Member."Full Name" := Member."First Name" + ' ' + Member."Last Name";
+                    // Set Registration Date if missing
+                    if Member."Registration Date" = 0DT then
+                        Member."Registration Date" := CurrentDateTime();
+
+                    // Set default Status if missing
+                    if Member.Status = Member.Status::Active then
+                        Member.Status := Member.Status::Active;
+
+                    // If member already exists → update instead of insert
+                    if ExistingMember.Get(Member."Member ID") then begin
+                        ExistingMember.TransferFields(Member, false); // false = don't overwrite PK
+                        ExistingMember.Modify();
+                        CurrXMLport.Skip(); // Skip insert since we already modified
+                    end else
+                        Member.Insert();    // New member → insert
                 end;
             }
         }

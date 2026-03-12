@@ -113,9 +113,9 @@ page 50102 "Member List"
                 PromotedCategory = Process;
                 trigger OnAction()
                 var
-                    MemberExportXMLport: Xmlport "Member Export";
+                    MemberImportExportMgt: Codeunit "Member Import/Export Mgt";
                 begin
-                    MemberExportXMLport.Run();
+                    MemberImportExportMgt.ExportMembers();
                 end;
             }
 
@@ -128,9 +128,9 @@ page 50102 "Member List"
                 PromotedCategory = Process;
                 trigger OnAction()
                 var
-                    MemberImportXMLport: Xmlport "Member Import";
+                    MemberImportExportMgt: Codeunit "Member Import/Export Mgt";
                 begin
-                    MemberImportXMLport.Run();
+                    MemberImportExportMgt.ImportMembers();
                 end;
             }
         }

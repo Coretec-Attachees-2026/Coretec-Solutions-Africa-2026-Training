@@ -1,11 +1,3 @@
-// ============================================================
-// Codeunit 50106 - Member Import/Export Management
-// ============================================================
-// PURPOSE: Handle import and export of Member data
-// NOTE: This codeunit is currently not used - the page buttons call XMLports directly
-// Kept as stub for future enhancements
-// ============================================================
-
 codeunit 50106 "Member Import/Export Mgt"
 {
 
@@ -14,10 +6,22 @@ codeunit 50106 "Member Import/Export Mgt"
     // -------------------------------------------------------
     procedure ExportMembers()
     var
-        MemberExportXMLport: Xmlport "Member Export";
+        MemberExport: XMLport "Member Export";
+        TempBlob: Codeunit "Temp Blob";
+        OutStr: OutStream;
+        InStr: InStream;
+        FileName: Text;
     begin
-        // Export members using XMLport 50112
-        MemberExportXMLport.Run();
+        FileName := 'Members.csv';
+
+        // Write XMLport output into memory stream
+        TempBlob.CreateOutStream(OutStr);
+        MemberExport.SetDestination(OutStr);
+        MemberExport.Export();
+
+        // Download with forced .csv filename
+        TempBlob.CreateInStream(InStr);
+        DownloadFromStream(InStr, 'Export Members', '', 'CSV Files (*.csv)|*.csv', FileName);
     end;
 
     // -------------------------------------------------------
@@ -25,9 +29,23 @@ codeunit 50106 "Member Import/Export Mgt"
     // -------------------------------------------------------
     procedure ImportMembers()
     var
-        MemberImportXMLport: Xmlport "Member Import";
+        MemberImport: XMLport "Member Import";
+        TempBlob: Codeunit "Temp Blob";
+        InStr: InStream;
+        OutStr: OutStream;
+        FileName: Text;
     begin
-        // Import members using XMLport 50113
-        MemberImportXMLport.Run();
+        FileName := '';
+
+        // Open file picker — user selects their CSV file
+        if not UploadIntoStream('Import Members', '', 'CSV Files (*.csv)|*.csv', FileName, InStr) then
+            exit; // User cancelled
+
+        // Feed the stream into the XMLport for import
+        MemberImport.SetSource(InStr);
+        MemberImport.Import();
+
+        Message('Members imported successfully from %1', FileName);
     end;
+
 }
