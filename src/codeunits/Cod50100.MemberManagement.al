@@ -104,6 +104,9 @@ codeunit 50100 "Member Management"
         // Step 6: Save to database
         Member.Insert();
 
+        // Step 7: Send welcome email to the new member
+        SendWelcomeEmailToMember(Member);
+
         exit(true);  // Return success
     end;
 
@@ -221,5 +224,83 @@ codeunit 50100 "Member Management"
         // Build and return the ID string
         // e.g., 'MEM-20260303-0001'
         exit('MEM-' + Format(Today, 0, '<Year4><Month,2><Day,2>') + '-' + Format(MemberCount, 0, '<Integer,4>'));
+    end;
+
+    // -------------------------------------------------------
+    // SendWelcomeEmailToMember
+    // -------------------------------------------------------
+    // PURPOSE: Sends a welcome/registration email to the member
+    //          when they are created from an approved application.
+    //
+    // HOW EMAIL WORKS IN BUSINESS CENTRAL:
+    //   1. EmailMessage.Create() - Builds the email (to, subject, body)
+    //   2. Email.Send() - Sends it using the configured Email Account
+    //
+    // SETUP REQUIRED:
+    //   Admin must configure an Email Account (search "Email Accounts" in BC).
+    //   Options: Microsoft 365, SMTP, or Current User.
+    //   Without setup, Email.Send returns false (we show a message but don't block).
+    //
+    // HOW TO SETUP EMAIL ACCOUNTS IN BUSINESS CENTRAL:
+    //   1. Search "Email Accounts" in BC
+    //   2. Click "New" to add an account
+    //   3. Choose Account Type:
+    //      - SMTP: Use any SMTP server (Gmail, corporate email, etc.)
+    //      - Microsoft 365: Use your Office 365 account (recommended for Office integration)
+    //      - Current User: Uses the currently logged-in Windows user's email
+    //   4. Fill in your credentials:
+    //      - For SMTP: Server, Port, Username, Password
+    //      - For Microsoft 365: Your tenant email and consent
+    //      - For Current User: Configure Windows authentication
+    //   5. Click "Test" to verify the setup works
+    //   6. Click "OK" to save
+    //
+    //   TROUBLESHOOTING:
+    //   - If emails fail: Check that you have at least one Email Account configured
+    //   - If using SMTP: Ensure port is correct (usually 587 for TLS, 465 for SSL)
+    //   - If using Microsoft 365: May need to enable low-security app access or use app passwords
+    //   - Test the account configuration by sending a test email from the Email Accounts page
+    //
+    // KEY CONCEPT - "Email.Send()" vs "Email.Enqueue()":
+    //   Email.Send() - Sends immediately in the current session (blocking)
+    //   Email.Enqueue() - Sends in background (better for batch operations)
+    //   We use Email.Send() here for immediate confirmation, but you can change to
+    //   Email.Enqueue() if you prefer background email processing.
+    //
+    // WHAT HAPPENS IF EMAIL ACCOUNT IS NOT CONFIGURED:
+    //   - Email.Send() returns false (no error thrown)
+    //   - We catch this and show a friendly message
+    //   - Member is STILL created (email is not critical to membership)
+    //   - Admin can resend the email later once Email Account is configured
+    // -------------------------------------------------------
+    local procedure SendWelcomeEmailToMember(Member: Record "Member")
+    var
+        EmailMessage: Codeunit "Email Message";
+        Email: Codeunit Email;
+        Subject: Text[100];
+        Body: Text;
+    begin
+        // Skip if member has no email address
+        if (Member.Email = '') or (Member."Full Name" = '') then
+            exit;
+
+        // Build the email content (use HTML for line breaks)
+        Subject := 'Welcome to the SACCO - Registration Confirmed';
+        Body := 'Dear ' + Member."Full Name" + ',<br/><br/>';
+        Body += 'Congratulations! Your membership has been approved.<br/>';
+        Body += 'Your Member ID is: ' + Member."Member ID" + '<br/><br/>';
+        Body += 'You can now access your account and apply for loans.<br/><br/>';
+        Body += 'Best regards,<br/>';
+        Body += 'The SACCO Team';
+
+        // Create the email message (true = HTML formatted body)
+        EmailMessage.Create(Member.Email, Subject, Body, true);
+
+        // Send the email (uses default Email Account from BC setup)
+        // Email.Send() sends immediately; Email.Enqueue() sends in background
+        if not Email.Send(EmailMessage) then
+            Message('Member created successfully, but the welcome email could not be sent. ' +
+                    'Please ensure an Email Account is configured. ' +
+                    'Go to Search > "Email Accounts" and add an account (SMTP, Microsoft 365, or Current User).');
     end;
 }
