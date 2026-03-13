@@ -169,10 +169,14 @@ page 50100 "Member Application List"
 
                 trigger OnAction()
                 var
+                    MemberSendEmail: Record Member;
                     MemberMgmt: Codeunit "Member Management";  // Business logic codeunit
                 begin
                     if Confirm('Do you want to approve this application?', false) then
                         MemberMgmt.ApproveApplication(rec."Application ID");
+                        MemberSendEmail.FindFirst();
+                        MemberMgmt.SendWelcomeEmailToMember(MemberSendEmail);
+
                     CurrPage.Update(false);  // Refresh the list to show new status
                 end;
             }
@@ -200,4 +204,5 @@ page 50100 "Member Application List"
             }
         }
     }
+    
 }

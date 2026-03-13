@@ -222,4 +222,27 @@ codeunit 50100 "Member Management"
         // e.g., 'MEM-20260303-0001'
         exit('MEM-' + Format(Today, 0, '<Year4><Month,2><Day,2>') + '-' + Format(MemberCount, 0, '<Integer,4>'));
     end;
+
+    procedure SendWelcomeEmailToMember(Member: Record Member)
+    var
+        EmailMessage: Codeunit "Email Message";
+        Email: Codeunit Email;
+        Subject: Text[100];
+        Body: Text;
+    begin
+        if (Member.Email = '') or (Member."Full Name" = '') then
+            exit;
+        Subject := 'Welcome to the SACCO - Regisration Confirmed';
+        Body := 'Dear' + Member."First Name" + ',<br/><br/>'; // Full Name
+        Body += 'Congratulations your membership has been approved <br/>';
+        Body += 'Your Member ID is: ' + Member."Member ID"; //Member ID
+        Body += 'You can now access your account and apply for loans. <br/><br/>';
+        Body += 'Best regards,<br/>';
+        Body += 'The SACCO Team';
+
+        EmailMessage.Create(Member."Email", Subject, Body, true);
+        if not Email.Send(EmailMessage) then
+            Message('Member created successfully, but the welcome email could not be sent. Please check Email Account setup (search "Email Accounts")');
+        
+    end;
 }
