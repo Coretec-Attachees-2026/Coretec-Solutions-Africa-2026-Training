@@ -17,7 +17,8 @@
 //   1. TransferApplicationToMember()  → Copies approved application data to Member table
 //   2. ApproveApplication()           → Approves an application and creates the member
 //   3. RejectApplication()            → Rejects an application with a reason
-//   4. GenerateMemberID()             → Creates unique member IDs like MEM-20260303-0001
+//   4. SendWelcomeEmailToMember()     → Sends a welcome email after member creation
+//   5. GenerateMemberID()             → Creates unique member IDs like MEM-20260303-0001
 // ============================================================
 
 codeunit 50100 "Member Management"
@@ -36,6 +37,10 @@ codeunit 50100 "Member Management"
     // RETURNS:
     //   Boolean - true if transfer was successful
     //
+    // OUTPUT PARAMETER:
+    //   WelcomeEmailStatusText - final message describing whether the
+    //   member was created and whether the welcome email was sent.
+    //
     // KEY CONCEPT - "Record":
     //   A Record variable (like MemberApp, Member) represents a row
     //   in a table. You can read fields, modify them, and save.
@@ -51,7 +56,7 @@ codeunit 50100 "Member Management"
     // KEY CONCEPT - ".Insert()":
     //   Saves the new record to the database.
     // -------------------------------------------------------
-    procedure TransferApplicationToMember(ApplicationID: Code[20]): Boolean
+    procedure TransferApplicationToMember(ApplicationID: Code[20]; var WelcomeEmailStatusText: Text[250]): Boolean
     var
         MemberApp: Record "Member Application";   // The application to read from
         Member: Record "Member";                    // The new member to create
@@ -104,6 +109,11 @@ codeunit 50100 "Member Management"
         // Step 6: Save to database
         Member.Insert();
 
+        // Step 7: Send welcome email to the new member
+        // Email is part of the onboarding experience, but it must NOT block
+        // member creation if Business Central email setup is missing.
+        SendWelcomeEmailToMember(Member, WelcomeEmailStatusText);
+
         exit(true);  // Return success
     end;
 
@@ -132,6 +142,7 @@ codeunit 50100 "Member Management"
     procedure ApproveApplication(ApplicationID: Code[20])
     var
         MemberApp: Record "Member Application";
+        WelcomeEmailStatusText: Text[250];
     begin
         // Find the application
         if not MemberApp.Get(ApplicationID) then
@@ -147,10 +158,10 @@ codeunit 50100 "Member Management"
         MemberApp.Modify();  // Save the changes
 
         // Create the member from the approved application
-        if TransferApplicationToMember(ApplicationID) then begin
+        if TransferApplicationToMember(ApplicationID, WelcomeEmailStatusText) then begin
             LogAuditEntry('Approved', 'Member Application', ApplicationID,
                 StrSubstNo('Application %1 approved and member created.', ApplicationID));
-            Message('Application %1 approved and member created successfully', ApplicationID);
+            Message('%1', WelcomeEmailStatusText);
         end;
     end;
 
@@ -185,6 +196,91 @@ codeunit 50100 "Member Management"
             StrSubstNo('Application %1 rejected. Reason: %2', ApplicationID, RejectionReason));
 
         Message('Application %1 has been rejected', ApplicationID);
+    end;
+
+    // -------------------------------------------------------
+    // SendWelcomeEmailToMember
+    // -------------------------------------------------------
+    // PURPOSE: Sends a welcome/registration email to the member
+    //          after they are created from an approved application.
+    //
+    // HOW EMAIL WORKS IN BUSINESS CENTRAL:
+    //   1. Email Message builds the email content (recipient, subject, body)
+    //   2. Email.Send() tries to send it using the default configured account
+    //
+    // SETUP REQUIRED:
+    //   An admin must configure an Email Account in Business Central.
+    //   Search for "Email Accounts" and add SMTP, Microsoft 365,
+    //   or Current User depending on the environment.
+    //
+    // IMPORTANT DESIGN DECISION:
+    //   Email delivery is NON-BLOCKING. If setup is missing or sending fails,
+    //   the member remains created and the approver gets an informational
+    //   message explaining what to configure.
+    // -------------------------------------------------------
+    local procedure SendWelcomeEmailToMember(Member: Record "Member"; var WelcomeEmailStatusText: Text[250])
+    var
+        EmailAccount: Record "Email Account";
+        EmailMessage: Codeunit "Email Message";
+        Subject: Text[100];
+        Body: Text;
+        SendFailureDetails: Text;
+    begin
+        // Skip silently if no email address exists.
+        // Member creation should not fail because contact details are incomplete.
+        if Member.Email = '' then begin
+            WelcomeEmailStatusText := StrSubstNo(
+                'Member %1 created. Email not sent because no email address is available for this member.',
+                Member."Member ID");
+            exit;
+        end;
+
+        Subject := 'Welcome to BOOMPOP SACCO - Registration Confirmed';
+        Body := 'Dear ' + Member."Full Name" + ',<br/><br/>';
+        Body += 'Congratulations! Your membership application has been approved.<br/>';
+        Body += 'Your Member ID is: ' + Member."Member ID" + '<br/><br/>';
+        Body += 'You can now access your account and apply for loans.<br/><br/>';
+        Body += 'Best regards,<br/>';
+        Body += 'The BOOMPOP SACCO Team';
+
+        // "true" means the body is HTML, so <br/> renders as line breaks.
+        EmailMessage.Create(Member.Email, Subject, Body, true);
+
+        if TrySendWelcomeEmail(EmailMessage) then
+            WelcomeEmailStatusText := StrSubstNo('Member %1 created and welcome email sent.', Member."Member ID")
+        else begin
+            SendFailureDetails := GetLastErrorText();
+
+            if EmailAccount.IsEmpty() then
+                WelcomeEmailStatusText := StrSubstNo(
+                    'Member %1 created. Email not sent because no Email Account is configured in Business Central. Search "Email Accounts" and add an account.',
+                    Member."Member ID")
+            else begin
+                if SendFailureDetails = '' then
+                    WelcomeEmailStatusText := StrSubstNo(
+                        'Member %1 created. Email account exists, but sending failed for another reason. Check the email configuration and try again.',
+                        Member."Member ID")
+                else
+                    WelcomeEmailStatusText := StrSubstNo(
+                        'Member %1 created. Email account exists, but sending failed. Error: %2',
+                        Member."Member ID",
+                        CopyStr(SendFailureDetails, 1, 140));
+            end;
+        end;
+    end;
+
+    // -------------------------------------------------------
+    // TrySendWelcomeEmail
+    // -------------------------------------------------------
+    // PURPOSE: Wraps Email.Send() in a TryFunction so email configuration
+    //          problems do not roll back member creation.
+    // -------------------------------------------------------
+    [TryFunction]
+    local procedure TrySendWelcomeEmail(var EmailMessage: Codeunit "Email Message")
+    var
+        Email: Codeunit Email;
+    begin
+        Email.Send(EmailMessage);
     end;
 
     // -------------------------------------------------------
