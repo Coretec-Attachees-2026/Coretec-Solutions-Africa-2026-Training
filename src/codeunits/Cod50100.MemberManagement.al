@@ -132,6 +132,7 @@ codeunit 50100 "Member Management"
     procedure ApproveApplication(ApplicationID: Code[20])
     var
         MemberApp: Record "Member Application";
+        NewMember: Record "Member";
     begin
         // Find the application
         if not MemberApp.Get(ApplicationID) then
@@ -147,8 +148,13 @@ codeunit 50100 "Member Management"
         MemberApp.Modify();  // Save the changes
 
         // Create the member from the approved application
-        if TransferApplicationToMember(ApplicationID) then
+        if TransferApplicationToMember(ApplicationID) then begin
+            // Get the newly created member to send welcome email
+            NewMember.SetRange("Application ID", ApplicationID);
+            if NewMember.FindFirst() then
+                SendWelcomeEmailToMember(NewMember);
             Message('Application %1 approved and member created successfully', ApplicationID);
+        end;
     end;
 
     // -------------------------------------------------------
@@ -221,5 +227,79 @@ codeunit 50100 "Member Management"
         // Build and return the ID string
         // e.g., 'MEM-20260303-0001'
         exit('MEM-' + Format(Today, 0, '<Year4><Month,2><Day,2>') + '-' + Format(MemberCount, 0, '<Integer,4>'));
+    end;
+
+    // -------------------------------------------------------
+    // SendWelcomeEmailToMember
+    // -------------------------------------------------------
+    // PURPOSE: Sends a welcome/registration email to the member
+    //          when they are created from an approved application.
+    //
+    // HOW EMAIL WORKS IN BUSINESS CENTRAL:
+    //   1. EmailMessage - Creates the email message object
+    //   2. Email.Send() - Sends it using configured Email Account
+    //
+    // SETUP REQUIRED:
+    //   Admin must configure an Email Account (search "Email Accounts" in BC).
+    //   Options: Microsoft 365, SMTP, or Current User.
+    //   Without setup, Email.Send returns false (we show message but don't block).
+    //
+    // HOW TO CONFIGURE EMAIL ACCOUNTS:
+    //   1. Search "Email Accounts" in Business Central
+    //   2. Click "+ New"
+    //   3. Choose account type:
+    //      - "SMTP" for mail servers (Gmail, Outlook SMTP, etc.)
+    //      - "Microsoft 365" for Office 365 accounts
+    //      - "Current User" for Windows authentication
+    //   4. Fill in credentials (SMTP server, port, username, password)
+    //   5. Test connection
+    //   6. Save
+    //
+    // -------------------------------------------------------
+    local procedure SendWelcomeEmailToMember(Member: Record "Member")
+    var
+        Email: Codeunit Email;
+        EmailMessage: Codeunit "Email Message";
+        Recipients: List of [Text];
+        Subject: Text;
+        Body: Text;
+        TrimmedEmail: Text;
+    begin
+        // Trim the email address (remove leading/trailing spaces)
+        TrimmedEmail := Member.Email.Trim();
+
+        // Skip if member has no email address or name
+        if (TrimmedEmail = '') or (Member."Full Name" = '') then
+            exit;
+
+        // Validate email format (must contain @ symbol)
+        if TrimmedEmail.IndexOf('@') = 0 then begin
+            Message('Invalid email format for member %1: %2. Email must contain @ symbol.', Member."Member ID", TrimmedEmail);
+            exit;
+        end;
+
+        // Build the email subject
+        Subject := 'Welcome to the SACCO - Registration Confirmed';
+
+        // Build the email body (use HTML for better formatting with <br/> for line breaks)
+        Body := 'Dear ' + Member."Full Name" + ',<br/><br/>';
+        Body += 'Congratulations! Your membership has been approved.<br/>';
+        Body += 'Your Member ID is: <strong>' + Member."Member ID" + '</strong><br/><br/>';
+        Body += 'You can now access your account and apply for loans.<br/>';
+        Body += 'Visit our member portal to get started.<br/><br/>';
+        Body += 'Best regards,<br/>';
+        Body += 'The SACCO Team<br/>';
+        Body += '---<br/>';
+        Body += 'Registration Date: ' + Format(Member."Registration Date", 0, '<Day>/<Month>/<Year>');
+
+        // Add recipient to the email (use trimmed email)
+        Recipients.Add(TrimmedEmail);
+
+        // Create the email message (true = HTML formatted body for rich text)
+        EmailMessage.Create(Recipients, Subject, Body, true);
+
+        // Send the email using configured Email Account from BC
+        if not Email.Send(EmailMessage) then
+            Message('Email could not be sent to: %1. Please verify: (1) Email account is configured in BC, (2) Email account credentials are correct, (3) Email address is valid. Go to "Email Accounts" in Business Central.', TrimmedEmail);
     end;
 }

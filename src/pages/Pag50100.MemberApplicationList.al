@@ -98,6 +98,20 @@ page 50100 "Member Application List"
     {
         area(Processing)
         {
+            action(ImportMembers)
+            {
+                Caption = 'Import Members';
+                Image = Import;
+                Promoted = true;
+                PromotedCategory = Process;
+                ToolTip = 'Import members from a CSV file';
+                trigger OnAction()
+                var
+                    ImportExportManager: Codeunit "Member Import/Export Mgt";
+                begin
+                    ImportExportManager.ImportMembers();
+                end;
+            }
             // --- Action: New Application ---
             // Opens the Application Card page in "Create" mode
             // KEY CONCEPT - "RunObject":

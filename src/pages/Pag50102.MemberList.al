@@ -92,6 +92,20 @@ page 50102 "Member List"
                 Promoted = true;
                 PromotedCategory = Process;
             }
+            action(ExportMembers)
+            {
+                Caption = 'Export Members';
+                Image = Export;
+                Promoted = true;
+                PromotedCategory = Process;
+                ToolTip = 'Export members to a CSV file';
+                trigger OnAction()
+                var
+                    ImportExportManager: Codeunit "Member Import/Export Mgt";
+                begin
+                    ImportExportManager.ExportMembers();
+                end;
+            }
         }
     }
 }
