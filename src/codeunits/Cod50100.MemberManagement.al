@@ -161,7 +161,7 @@ codeunit 50100 "Member Management"
     // RejectApplication
     // -------------------------------------------------------
     // PURPOSE: Rejects a pending application with a reason.
-    //          No member record is created.
+    //          No member record is created, but rejection email is sent.
     //
     // PARAMETERS:
     //   ApplicationID    - Which application to reject
@@ -184,7 +184,10 @@ codeunit 50100 "Member Management"
         MemberApp."Approval Date" := CurrentDateTime;  // Records when the decision was made
         MemberApp.Modify();
 
-        Message('Application %1 has been rejected', ApplicationID);
+        // Send rejection email to applicant
+        SendRejectionEmailToApplicant(MemberApp, RejectionReason);
+
+        Message('Application %1 has been rejected and email sent to applicant', ApplicationID);
     end;
 
     // -------------------------------------------------------
@@ -301,5 +304,100 @@ codeunit 50100 "Member Management"
         // Send the email using configured Email Account from BC
         if not Email.Send(EmailMessage) then
             Message('Email could not be sent to: %1. Please verify: (1) Email account is configured in BC, (2) Email account credentials are correct, (3) Email address is valid. Go to "Email Accounts" in Business Central.', TrimmedEmail);
+    end;
+
+    // -------------------------------------------------------
+    // SendRejectionEmailToApplicant
+    // -------------------------------------------------------
+    // PURPOSE: Sends a rejection email to applicant with reason
+    //          when their application is rejected.
+    //
+    // PARAMETERS:
+    //   MemberApp: Record "Member Application" - The rejected application
+    //   RejectionReason: Text - The reason for rejection
+    //
+    // EMAIL TEMPLATE SUPPORT:
+    //   This procedure uses a template from Member Setup if configured.
+    //   Template variables:
+    //   - {First Name}       → Applicant's first name
+    //   - {Application ID}   → Application reference number
+    //   - {Rejection Reason} → Admin's reason for rejection
+    //
+    // FALLBACK:
+    //   If no template configured, uses default message.
+    //
+    // -------------------------------------------------------
+    local procedure SendRejectionEmailToApplicant(MemberApp: Record "Member Application"; RejectionReason: Text)
+    var
+        Email: Codeunit Email;
+        EmailMessage: Codeunit "Email Message";
+        MemberSetup: Record "Member Setup";
+        Recipients: List of [Text];
+        Subject: Text;
+        Body: Text;
+        TrimmedEmail: Text;
+    begin
+        // Trim the email address (remove leading/trailing spaces)
+        TrimmedEmail := MemberApp.Email.Trim();
+
+        // Skip if applicant has no email address or name
+        if (TrimmedEmail = '') or (MemberApp."First Name" = '') then
+            exit;
+
+        // Get setup record to check for custom template
+        MemberSetup.GetOrCreateSetup();
+
+        // Use custom subject if configured, otherwise use default
+        if MemberSetup."Rejection Email Subject" <> '' then
+            Subject := MemberSetup."Rejection Email Subject"
+        else
+            Subject := 'Your SACCO Application - Status Update';
+
+        // Replace variables in subject
+        Subject := ReplaceTemplateVariables(Subject, MemberApp."First Name", MemberApp."Application ID", RejectionReason);
+
+        // Build the email body with rejection reason
+        Body := 'Dear ' + MemberApp."First Name" + ',<br/><br/>';
+        Body += 'Thank you for your interest in our SACCO.<br/><br/>';
+        Body += 'Unfortunately, we regret to inform you that your application (ID: <strong>' + MemberApp."Application ID" + '</strong>) has been <strong>rejected</strong>.<br/><br/>';
+        Body += '<strong>Reason for Rejection:</strong><br/>';
+        Body += RejectionReason + '<br/><br/>';
+        Body += 'If you have any questions or would like to appeal this decision, please contact our office.<br/><br/>';
+        Body += 'Best regards,<br/>';
+        Body += 'The SACCO Team<br/>';
+        Body += '---<br/>';
+        Body += 'Application Date: ' + Format(MemberApp."Application Date", 0, '<Day>/<Month>/<Year>');
+
+        // Add recipient to the email
+        Recipients.Add(TrimmedEmail);
+
+        // Create the email message (true = HTML formatted body for rich text)
+        EmailMessage.Create(Recipients, Subject, Body, true);
+
+        // Send the email using configured Email Account from BC
+        if not Email.Send(EmailMessage) then
+            Message('Rejection email could not be sent to: %1. Please verify email account setup in Business Central.', TrimmedEmail);
+    end;
+
+    // -------------------------------------------------------
+    // ReplaceTemplateVariables
+    // -------------------------------------------------------
+    // PURPOSE: Replaces template variables with actual values
+    //
+    // VARIABLES:
+    //   {First Name}       → Applicant's first name
+    //   {Application ID}   → Application ID
+    //   {Rejection Reason} → Rejection reason text
+    //
+    // -------------------------------------------------------
+    local procedure ReplaceTemplateVariables(TemplateText: Text; FirstName: Text; ApplicationID: Code[20]; RejectionReason: Text): Text
+    var
+        Result: Text;
+    begin
+        Result := TemplateText;
+        Result := Result.Replace('{First Name}', FirstName);
+        Result := Result.Replace('{Application ID}', ApplicationID);
+        Result := Result.Replace('{Rejection Reason}', RejectionReason);
+        exit(Result);
     end;
 }

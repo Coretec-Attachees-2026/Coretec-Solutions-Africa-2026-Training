@@ -59,6 +59,24 @@ table 50104 "Member Setup"
             TableRelation = "G/L Account"."No." where("Direct Posting" = const(true));
             // This is the CREDIT side (bank account - money going out)
         }
+
+        // ===== EMAIL TEMPLATES =====
+        field(10; "Rejection Email Subject"; Text[100])
+        {
+            Caption = 'Rejection Email Subject';
+            // Default: 'Your SACCO Application - Status Update'
+            // Variables: {First Name}, {Application ID}
+        }
+        field(11; "Rejection Email Body"; Blob)
+        {
+            Caption = 'Rejection Email Body';
+            // Stores HTML template for rejection emails
+            // Variables in template: {First Name}, {Rejection Reason}, {Application ID}
+            // Example:
+            // Dear {First Name},
+            // Your application {Application ID} has been rejected.
+            // Reason: {Rejection Reason}
+        }
     }
 
     keys

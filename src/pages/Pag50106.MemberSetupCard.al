@@ -58,6 +58,26 @@ page 50106 "Member Setup"
         }
     }
 
+    actions
+    {
+        area(Processing)
+        {
+            action("View Dashboard")
+            {
+                Caption = 'View Dashboard';
+                ToolTip = 'Open the Member Dashboard to view SACCO statistics and summaries.';
+                Image = BarChart;
+                Promoted = true;
+                PromotedCategory = Process;
+
+                trigger OnAction()
+                begin
+                    Page.Run(Page::"Member Dashboard");
+                end;
+            }
+        }
+    }
+
     trigger OnOpenPage()
     var
         MemberAppNoSeriesMgt: Codeunit "Member App No. Series Mgt";
