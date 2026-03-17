@@ -181,6 +181,9 @@ codeunit 50100 "Member Management"
         MemberApp."Approval Date" := CurrentDateTime;  // Records when the decision was made
         MemberApp.Modify();
 
+        // Send rejection email to the applicant
+        SendRejectionEmailToApplicant(MemberApp);
+
         Message('Application %1 has been rejected', ApplicationID);
     end;
 
@@ -303,4 +306,73 @@ codeunit 50100 "Member Management"
                     'Please ensure an Email Account is configured. ' +
                     'Go to Search > "Email Accounts" and add an account (SMTP, Microsoft 365, or Current User).');
     end;
+
+    // -------------------------------------------------------
+    // SendRejectionEmailToApplicant
+    // -------------------------------------------------------
+    // PURPOSE: Sends a rejection email to the applicant when their
+    //          application is rejected.
+    //
+    // HOW IT WORKS:
+    //   1. Gets the rejection email template from Member Setup
+    //   2. Replaces placeholders: {First Name}, {Rejection Reason}, {Application ID}
+    //   3. Sends the email using the configured Email Account
+    //
+    // VARIABLES:
+    //   {First Name}        → Applicant's first name
+    //   {Rejection Reason}  → Admin-provided reason for rejection
+    //   {Application ID}    → The rejected application ID
+    //
+    // TEMPLATE EXAMPLE:
+    //   "Dear {First Name}, Your application {Application ID} has been rejected.
+    //    Reason: {Rejection Reason}"
+    // -------------------------------------------------------
+    local procedure SendRejectionEmailToApplicant(MemberApp: Record "Member Application")
+    var
+        MemberSetup: Record "Member Setup";
+        EmailMessage: Codeunit "Email Message";
+        Email: Codeunit Email;
+        Subject: Text[100];
+        Body: Text;
+        TemplateText: Text;
+        InStream: InStream;
+    begin
+        // Skip if applicant has no email address or no first name
+        if (MemberApp.Email = '') or (MemberApp."First Name" = '') then
+            exit;
+
+        // Get the setup record and read the rejection email template
+        MemberSetup.GetOrCreateSetup();
+
+        // Convert Blob to text for template processing
+        if MemberSetup."Rejection Email Template".HasValue() then begin
+            MemberSetup."Rejection Email Template".CreateInStream(InStream);
+            InStream.ReadText(TemplateText);
+        end;
+
+        // If no template is configured, use a default message
+        if TemplateText = '' then
+            TemplateText := 'Dear {First Name}, ' +
+                           'We regret to inform you that your application {Application ID} has been rejected. ' +
+                           'Reason: {Rejection Reason}';
+
+        // Replace placeholders with actual values
+        Body := TemplateText;
+        Body := Body.Replace('{First Name}', MemberApp."First Name");
+        Body := Body.Replace('{Application ID}', MemberApp."Application ID");
+        Body := Body.Replace('{Rejection Reason}', MemberApp."Rejection Reason");
+
+        // Build the subject line
+        Subject := 'Application Status: Rejected';
+
+        // Create the email message (true = HTML formatted body)
+        EmailMessage.Create(MemberApp.Email, Subject, Body, true);
+
+        // Send the email (uses default Email Account from BC setup)
+        if not Email.Send(EmailMessage) then
+            Message('Application rejection email could not be sent. ' +
+                    'Please ensure an Email Account is configured. ' +
+                    'Go to Search > "Email Accounts" and add an account (SMTP, Microsoft 365, or Current User).');
+    end;
 }
+

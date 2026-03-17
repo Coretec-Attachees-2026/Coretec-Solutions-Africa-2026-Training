@@ -55,6 +55,38 @@ page 50106 "Member Setup"
                     ToolTip = 'The G/L Account to CREDIT when a loan is disbursed. This is typically the bank account from which loan money is paid out.';
                 }
             }
+
+            // ----- Email Templates (NEW) -----
+            group("Email Templates")
+            {
+                Caption = 'Email Templates';
+
+                field("Rejection Email Template"; rec."Rejection Email Template")
+                {
+                    ToolTip = 'The email template sent to applicants when their application is rejected. Variables: {First Name}, {Rejection Reason}, {Application ID}. Example: "Dear {First Name}, Your application {Application ID} has been rejected. Reason: {Rejection Reason}"';
+                    MultiLine = true;
+                }
+            }
+        }
+    }
+
+    actions
+    {
+        area(Processing)
+        {
+            action(OpenDashboard)
+            {
+                Caption = 'Member Dashboard';
+                Image = Edit;
+                Promoted = true;
+                PromotedCategory = Process;
+                ToolTip = 'Open the Member Dashboard to view key statistics and performance indicators';
+
+                trigger OnAction()
+                begin
+                    Page.Run(Page::"Member Dashboard");
+                end;
+            }
         }
     }
 

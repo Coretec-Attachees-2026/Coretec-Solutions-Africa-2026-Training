@@ -59,6 +59,16 @@ table 50104 "Member Setup"
             TableRelation = "G/L Account"."No." where("Direct Posting" = const(true));
             // This is the CREDIT side (bank account - money going out)
         }
+
+        // ----- Email Templates -----
+
+        field(6; "Rejection Email Template"; Blob)
+        {
+            Caption = 'Rejection Email Template';
+            // Blob = Binary Large Object - stores email templates as text
+            // Template variables: {First Name}, {Rejection Reason}, {Application ID}
+            // Example: "Dear {First Name}, Your application {Application ID} has been rejected. Reason: {Rejection Reason}"
+        }
     }
 
     keys
