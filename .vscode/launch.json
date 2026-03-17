@@ -18,7 +18,6 @@
             "tenant": "default",
             "usePublicURLFromServer": true,
             "port": 7049,
-            "schemaUpdateMode": "Recreate"
         }
     ]
 }

@@ -179,6 +179,7 @@ codeunit 50100 "Member Management"
         MemberApp.Modify();
 
         Message('Application %1 has been rejected', ApplicationID);
+        SendRejectionEmailToMember(MemberApp);
     end;
 
     // -------------------------------------------------------
@@ -233,16 +234,94 @@ codeunit 50100 "Member Management"
         if (Member.Email = '') or (Member."Full Name" = '') then
             exit;
         Subject := 'Welcome to the SACCO - Regisration Confirmed';
-        Body := 'Dear' + Member."First Name" + ',<br/><br/>'; // Full Name
-        Body += 'Congratulations your membership has been approved <br/>';
-        Body += 'Your Member ID is: ' + Member."Member ID"; //Member ID
-        Body += 'You can now access your account and apply for loans. <br/><br/>';
-        Body += 'Best regards,<br/>';
-        Body += 'The SACCO Team';
+
+        Body += FindReplaceWelcomeEmailSetup(Body, Member);
 
         EmailMessage.Create(Member."Email", Subject, Body, true);
         if not Email.Send(EmailMessage) then
             Message('Member created successfully, but the welcome email could not be sent. Please check Email Account setup (search "Email Accounts")');
         
+    end;
+    procedure SendRejectionEmailToMember(Member: Record "Member Application")
+    var
+        EmailMessage: Codeunit "Email Message";
+        Email: Codeunit Email;
+        Subject: Text[100];
+        Body: Text;
+    begin
+        if (Member.Email = '') or (Member."First Name" = '') then
+            exit;
+        Subject := 'Application not approved - Action required';
+
+        Body += FindReplaceRejectionEmailSetup(Body, Member);
+
+        EmailMessage.Create(Member."Email", Subject, Body, true);
+        if not Email.Send(EmailMessage) then
+            Message('Member created successfully, but the welcome email could not be sent. Please check Email Account setup (search "Email Accounts")');
+        
+    end;
+
+    procedure FindReplaceWelcomeEmailSetup(EmailText: Text; Member: Record Member): Text
+    var
+        WelcomeEmailSetupRecord: Record WelcomeEmailSetupTable;
+        EmailBody: Text;
+    begin
+        if not WelcomeEmailSetupRecord.FindFirst() then
+            exit(EmailText);
+
+        EmailBody := WelcomeEmailSetupRecord.GetRichText();
+
+        EmailBody := EmailBody.Replace('{Member ID}', Member."Member ID");
+        EmailBody := EmailBody.Replace('{Application ID}', Member."Application ID");
+        EmailBody := EmailBody.Replace('{First Name}', Member."First Name");
+        EmailBody := EmailBody.Replace('{Last Name}', Member."Last Name");
+        EmailBody := EmailBody.Replace('{Full Name}', Member."Full Name");
+        EmailBody := EmailBody.Replace('{Email}', Member."Email");
+        EmailBody := EmailBody.Replace('{Phone Number}', Member."Phone Number");
+        EmailBody := EmailBody.Replace('{Date of Birth}', Format(Member."Date of Birth"));
+        EmailBody := EmailBody.Replace('{Address}', Member."Address");
+        EmailBody := EmailBody.Replace('{City}', Member."City");
+        EmailBody := EmailBody.Replace('{Postal Code}', Member."Postal Code");
+        EmailBody := EmailBody.Replace('{Country}', Member."Country");
+        EmailBody := EmailBody.Replace('{ID/Passport Number}', Member."ID Number");
+        EmailBody := EmailBody.Replace('{Registration Date}', Format(Member."Registration Date"));
+        EmailBody := EmailBody.Replace('{Member Status}', Format(Member."Status"));
+        EmailBody := EmailBody.Replace('{Occupation}', Member."Occupation");
+        EmailBody := EmailBody.Replace('{Annual Income}', Format(Member."Annual Income"));
+        EmailBody := EmailBody.Replace('{Member Category}', Member."Member Category");
+
+        exit(EmailBody);
+    end;
+
+    procedure FindReplaceRejectionEmailSetup(EmailText: Text; MemberRejected: Record "Member Application"): Text
+    var
+        RejectionEmailSetupRecord: Record RejectionEmailSetupTable;
+        EmailBody: Text;
+    begin
+        if not RejectionEmailSetupRecord.FindFirst() then
+            exit(EmailText);
+
+        EmailBody := RejectionEmailSetupRecord.GetRichText();
+
+        EmailBody := EmailBody.Replace('{Application ID}', MemberRejected."Application ID");
+        EmailBody := EmailBody.Replace('{First Name}', MemberRejected."First Name");
+        EmailBody := EmailBody.Replace('{Last Name}', MemberRejected."Last Name");
+        EmailBody := EmailBody.Replace('{Email}', MemberRejected."Email");
+        EmailBody := EmailBody.Replace('{Phone Number}', MemberRejected."Phone Number");
+        EmailBody := EmailBody.Replace('{Date of Birth}', Format(MemberRejected."Date of Birth"));
+        EmailBody := EmailBody.Replace('{Address}', MemberRejected."Address");
+        EmailBody := EmailBody.Replace('{City}', MemberRejected."City");
+        EmailBody := EmailBody.Replace('{Postal Code}', MemberRejected."Postal Code");
+        EmailBody := EmailBody.Replace('{Country}', MemberRejected."Country");
+        EmailBody := EmailBody.Replace('{ID Number}', MemberRejected."ID Number");
+        EmailBody := EmailBody.Replace('{Application Date}', Format(MemberRejected."Application Date"));
+        EmailBody := EmailBody.Replace('{Status}', Format(MemberRejected."Status"));
+        EmailBody := EmailBody.Replace('{Approval Date}', Format(MemberRejected."Approval Date"));
+        EmailBody := EmailBody.Replace('{Rejection Reason}', MemberRejected."Rejection Reason");
+        EmailBody := EmailBody.Replace('{Occupation}', MemberRejected."Occupation");
+        EmailBody := EmailBody.Replace('{Annual Income}', Format(MemberRejected."Annual Income"));
+        EmailBody := EmailBody.Replace('{Member Category}', MemberRejected."Member Category");
+
+        exit(EmailBody);
     end;
 }

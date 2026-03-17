@@ -1,12 +1,12 @@
-table 50128 WelcomeEmailSeup
+table 50131 RejectionEmailSetupTable
 {
     DataClassification = ToBeClassified;
 
     fields
     {
-        field(1; MyField; Text[27])
+        field(1; MyField; Text[29])
         {
-            InitValue = 'Welcome Email Format Set up';
+            InitValue = 'Rejection Email Format Set up';
         }
         field(2; "Email Format Blob"; Blob)
         {

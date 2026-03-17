@@ -177,4 +177,11 @@ table 50101 "Member"
         }
     }
 
+    trigger OnInsert()
+    var
+        MemberManagement: Codeunit "Member Management";
+    begin
+        MemberManagement.SendWelcomeEmailToMember(Rec);
+    end;
+
 }
