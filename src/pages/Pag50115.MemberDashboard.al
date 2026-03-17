@@ -1,16 +1,3 @@
-// ============================================================
-// Page 50115 - Member Dashboard
-// ============================================================
-// PURPOSE: Displays SACCO summary statistics.
-//
-// FEATURES:
-//   - Shows: Total Members, Active Members, Account Balance, Pending Apps
-//   - No SourceTable - uses variables and calculations
-//   - OnOpenPage calculates aggregated values from tables
-//   - Refresh button to recalculate statistics
-//
-// ============================================================
-
 page 50115 "Member Dashboard"
 {
     Caption = 'Member Dashboard';
