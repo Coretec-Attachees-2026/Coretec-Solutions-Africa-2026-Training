@@ -280,6 +280,7 @@ codeunit 50100 "Member Management"
     var
         EmailMessage: Codeunit "Email Message";
         Email: Codeunit Email;
+        EmailPreview: Page "Email Preview Dialog";
         Subject: Text[100];
         Body: Text;
     begin
@@ -287,7 +288,7 @@ codeunit 50100 "Member Management"
         if (Member.Email = '') or (Member."Full Name" = '') then
             exit;
 
-        // Build the email content (use HTML for line breaks)
+        // Build the default email content (use HTML for line breaks)
         Subject := 'Welcome to the SACCO - Registration Confirmed';
         Body := 'Dear ' + Member."Full Name" + ',<br/><br/>';
         Body += 'Congratulations! Your membership has been approved.<br/>';
@@ -295,18 +296,28 @@ codeunit 50100 "Member Management"
         Body += 'You can now access your account and apply for loans.<br/><br/>';
         Body += 'Best regards,<br/>';
         Body += 'The SACCO Team';
+        // ✅ CRITICAL FIX: Commit closes the write transaction
+        // Member is already saved to DB at this point
+        // Now RunModal is allowed
+        Commit();
 
-        // Create the email message (true = HTML formatted body)
-        EmailMessage.Create(Member.Email, Subject, Body, true);
+        // Open the preview dialog so admin can edit before sending
+        EmailPreview.SetEmailContent(Member.Email, Subject, Body);
 
-        // Send the email (uses default Email Account from BC setup)
-        // Email.Send() sends immediately; Email.Enqueue() sends in background
-        if not Email.Send(EmailMessage) then
-            Message('Member created successfully, but the welcome email could not be sent. ' +
-                    'Please ensure an Email Account is configured. ' +
-                    'Go to Search > "Email Accounts" and add an account (SMTP, Microsoft 365, or Current User).');
+        if EmailPreview.RunModal() = Action::OK then begin
+            // Read the (possibly edited) content from the dialog
+            EmailPreview.GetEmailContent(Subject, Body);
+
+            // Create and send the email (true = HTML formatted body)
+            EmailMessage.Create(Member.Email, Subject, Body, true);
+
+            if not Email.Send(EmailMessage) then
+                Message('Member created successfully, but the welcome email could not be sent. ' +
+                        'Please ensure an Email Account is configured. ' +
+                        'Go to Search > "Email Accounts" and add an account (SMTP, Microsoft 365, or Current User).');
+        end else
+            Message('Welcome email was not sent. Admin cancelled the email preview.');
     end;
-
     // -------------------------------------------------------
     // SendRejectionEmailToApplicant
     // -------------------------------------------------------
@@ -332,6 +343,7 @@ codeunit 50100 "Member Management"
         MemberSetup: Record "Member Setup";
         EmailMessage: Codeunit "Email Message";
         Email: Codeunit Email;
+        EmailPreview: Page "Email Preview Dialog";
         Subject: Text[100];
         Body: Text;
         TemplateText: Text;
@@ -364,15 +376,24 @@ codeunit 50100 "Member Management"
 
         // Build the subject line
         Subject := 'Application Status: Rejected';
+        // ✅ CRITICAL FIX: Commit before RunModal
+        Commit();
+        // Open preview dialog so admin can edit before sending
+        EmailPreview.SetEmailContent(MemberApp.Email, Subject, Body);
 
-        // Create the email message (true = HTML formatted body)
-        EmailMessage.Create(MemberApp.Email, Subject, Body, true);
+        if EmailPreview.RunModal() = Action::OK then begin
+            // Read the (possibly edited) content from the dialog
+            EmailPreview.GetEmailContent(Subject, Body);
 
-        // Send the email (uses default Email Account from BC setup)
-        if not Email.Send(EmailMessage) then
-            Message('Application rejection email could not be sent. ' +
-                    'Please ensure an Email Account is configured. ' +
-                    'Go to Search > "Email Accounts" and add an account (SMTP, Microsoft 365, or Current User).');
+            // Create the email message (true = HTML formatted body)
+            EmailMessage.Create(MemberApp.Email, Subject, Body, true);
+
+            // Send the email (uses default Email Account from BC setup)
+            if not Email.Send(EmailMessage) then
+                Message('Application rejection email could not be sent. ' +
+                        'Please ensure an Email Account is configured. ' +
+                        'Go to Search > "Email Accounts" and add an account (SMTP, Microsoft 365, or Current User).');
+        end else
+            Message('Rejection email was not sent. Admin cancelled the email preview.');
     end;
 }
-
