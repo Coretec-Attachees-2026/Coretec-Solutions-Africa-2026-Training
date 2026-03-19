@@ -202,6 +202,26 @@ page 50100 "Member Application List"
                     end;
                 end;
             }
+            action(ExportMembers)
+            {
+                Caption = 'Export members';
+                Image = Import;
+                trigger OnAction()
+                begin
+                    Xmlport.Run(Xmlport::"Export Member XMLport", true, false);
+                end;
+            }
+            action(ImportMembers)
+            {
+                Promoted = true;
+                PromotedCategory = Process;
+                Caption = 'Import Members';
+                Image = Export;
+                trigger OnAction()
+                begin
+                    Xmlport.Run(Xmlport::"Import Members XMLport", true, true);
+                end;
+            }
         }
     }
     

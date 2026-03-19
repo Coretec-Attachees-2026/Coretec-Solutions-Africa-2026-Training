@@ -90,33 +90,10 @@ page 50102 "Member List"
                 RunPageLink = "Member ID" = field("Member ID");
                 Image = Open;
             }
-            action(ExportMembers)
-            {
-                Caption = 'Export members';
-                Image = Import;
-                trigger OnAction()
-                begin
-                    Xmlport.Run(Xmlport::"Export Member XMLport", true, false);
-                end;
-            }
-            action(ImportMembers)
-            {
-                Caption = 'Import Members';
-                Image = Export;
-                trigger OnAction()
-                begin
-                    Xmlport.Run(Xmlport::"Import Members XMLport", true, true);
-                end;
-            }
+
         }
         area(Promoted) {
             actionref("View details"; ViewDetails) {
-
-            }
-            actionref("Export members"; ExportMembers) {
-
-            }
-            actionref("Import members"; ImportMembers) {
 
             }
         }

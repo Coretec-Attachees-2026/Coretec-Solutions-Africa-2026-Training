@@ -1,18 +1,3 @@
-// ============================================================
-// Page 50106 - Member Setup
-// ============================================================
-// PURPOSE: Configuration page where admin sets up No. Series
-//          and G/L accounts for the SACCO system.
-//
-// KEY CONCEPT - "PageType = Card":
-//   A Card page shows ONE record at a time (like a form).
-//   Since Member Setup has only 1 record, Card is perfect.
-//
-// KEY CONCEPT - "InsertAllowed = false; DeleteAllowed = false":
-//   We don't want users creating multiple setup records or deleting it.
-//   The system creates the one-and-only record automatically.
-// ============================================================
-
 page 50106 "Member Setup"
 {
     Caption = 'Member Setup';
@@ -27,7 +12,6 @@ page 50106 "Member Setup"
     {
         area(Content)
         {
-            // ----- Member Application Settings -----
             group("Member Application")
             {
                 Caption = 'Member Application';
@@ -36,8 +20,6 @@ page 50106 "Member Setup"
                     ToolTip = 'Specifies the No. Series used to generate member application IDs.';
                 }
             }
-
-            // ----- Loan Settings (NEW) -----
             group("Loan Settings")
             {
                 Caption = 'Loan Settings';
@@ -54,6 +36,30 @@ page 50106 "Member Setup"
                 {
                     ToolTip = 'The G/L Account to CREDIT when a loan is disbursed. This is typically the bank account from which loan money is paid out.';
                 }
+            }
+        }
+    }
+
+    actions {
+        area(Processing) {
+            action(MemberDashboard) {
+
+                Caption = 'Member Dashboard';
+                Image = UserInterface;
+                ApplicationArea = all;
+                trigger OnAction()
+                var
+                    MemberDashboardPage: Page "Member Dashboard";
+                begin
+                    CurrPage.Close();
+                    MemberDashboardPage.Run();
+                end;
+
+            }
+        }
+        area(Promoted) {
+            actionref("Member Dashboard"; MemberDashboard) {
+
             }
         }
     }

@@ -1,0 +1,54 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\lenso\\OneDrive\\Documents\\AL\\Coretec-Solutions-Africa-2026-Training\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\lenso\\OneDrive\\Documents\\AL\\Coretec-Solutions-Africa-2026-Training\\LoanSummaryByMember.rdl||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:LoanSummaryByMember.rdl||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\lenso\\OneDrive\\Documents\\AL\\Coretec-Solutions-Africa-2026-Training\\Item Report.RDL||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Item Report.RDL||{8B382828-6202-11D1-8870-0000F87579D2}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "LoanSummaryByMember.rdl",
+              "DocumentMoniker": "C:\\Users\\lenso\\OneDrive\\Documents\\AL\\Coretec-Solutions-Africa-2026-Training\\LoanSummaryByMember.rdl",
+              "RelativeDocumentMoniker": "LoanSummaryByMember.rdl",
+              "ToolTip": "C:\\Users\\lenso\\OneDrive\\Documents\\AL\\Coretec-Solutions-Africa-2026-Training\\LoanSummaryByMember.rdl",
+              "RelativeToolTip": "LoanSummaryByMember.rdl",
+              "ViewState": "AgIAAA4AAACAMjMzMzMbwAUAAAAcAAAAAAAAAA==",
+              "Icon": "00000000-0000-0000-0000-000000000000.000000|iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAKESURBVDhPY2QAgslSMifV2dhNQWx8gInhX9GKjx9WzHn//gVUCBX8//\u002BfBcpkkEtNYRD38oDysIM7HV0FLkePCHAxMs6a9O7dM6gwAjAyMjKDaC9evlSdwEBpdglxhufrNjB8uX4DBf948pRB1MWZgUNaip/t2w9RjkePuESZmW/e/fXrx4////\u002BBDYMCuAtB4Nu9\u002BwxPFi\u002BB8hCAXVycQTY2moGJnYOBV1dXS\u002B3nD3aBw4e/fPj7d83Bb9\u002BePv/z5xdUKTBYSACPFy5i\u002BPHiOYNUWJgyn5Jyfaq4hKc9N7e0IDMz3GEkGQgCz9euBwbLegajpUs42WXkumL4BULC\u002BflFodKkG/j/92\u002BGj\u002BcvMFyvqmZUKsrnkrSzT7Pj4s7IExaWBsmjhCEhIBHgx8CnpwdmM7GxMghZWTGwcHAqM7GzBb/bvh0Ujq1EufDvjx8Mbw4eAqYKJgZuZSUw5pSVZfhw6jQDt6YGg5CtndZ/BkY/kFqiXPjn40eG6xVVYDYzNxcDCw8vMA3/Y/j99h2DZmc7WBwGSA5DyaAgBtP1axiMly5h4JCRgYoiAIaBoDSn3d/LoDd9KoOouxtUFAFYeLgZOCQkgOrEGJhYMD2IYSALDw\u002BDqLMTgxjQMG4lRago8YCgl1mFhBgErSzBGMQmBAgaKGBizGC8ZBEYg9iEAMmRQghghOrPly8ZrlfXggP809WrDH8\u002Bf2G4WlwKlvt0\u002BQrDtwcPGH6\u002BeMnw788fsFp0gOJCLmAkSAQGMLAKCDAwAyNH0NwcXGyB2CAMYoPEQGyQGpBaLiUlqG4IgLvw\u002B9OnDHz6usB0FgAVIR6A9MIAvArQYOcwA4uQCW78/HEq99kTcwCkwMCocNDs7gAAAABJRU5ErkJggg==",
+              "WhenOpened": "2026-03-19T12:16:08.049Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Item Report.RDL",
+              "DocumentMoniker": "C:\\Users\\lenso\\OneDrive\\Documents\\AL\\Coretec-Solutions-Africa-2026-Training\\Item Report.RDL",
+              "RelativeDocumentMoniker": "Item Report.RDL",
+              "ToolTip": "C:\\Users\\lenso\\OneDrive\\Documents\\AL\\Coretec-Solutions-Africa-2026-Training\\Item Report.RDL",
+              "RelativeToolTip": "Item Report.RDL",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "00000000-0000-0000-0000-000000000000.000000|iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAKESURBVDhPY2QAgslSMifV2dhNQWx8gInhX9GKjx9WzHn//gVUCBX8//\u002BfBcpkkEtNYRD38oDysIM7HV0FLkePCHAxMs6a9O7dM6gwAjAyMjKDaC9evlSdwEBpdglxhufrNjB8uX4DBf948pRB1MWZgUNaip/t2w9RjkePuESZmW/e/fXrx4////\u002BBDYMCuAtB4Nu9\u002BwxPFi\u002BB8hCAXVycQTY2moGJnYOBV1dXS\u002B3nD3aBw4e/fPj7d83Bb9\u002BePv/z5xdUKTBYSACPFy5i\u002BPHiOYNUWJgyn5Jyfaq4hKc9N7e0IDMz3GEkGQgCz9euBwbLegajpUs42WXkumL4BULC\u002BflFodKkG/j/92\u002BGj\u002BcvMFyvqmZUKsrnkrSzT7Pj4s7IExaWBsmjhCEhIBHgx8CnpwdmM7GxMghZWTGwcHAqM7GzBb/bvh0Ujq1EufDvjx8Mbw4eAqYKJgZuZSUw5pSVZfhw6jQDt6YGg5CtndZ/BkY/kFqiXPjn40eG6xVVYDYzNxcDCw8vMA3/Y/j99h2DZmc7WBwGSA5DyaAgBtP1axiMly5h4JCRgYoiAIaBoDSn3d/LoDd9KoOouxtUFAFYeLgZOCQkgOrEGJhYMD2IYSALDw\u002BDqLMTgxjQMG4lRago8YCgl1mFhBgErSzBGMQmBAgaKGBizGC8ZBEYg9iEAMmRQghghOrPly8ZrlfXggP809WrDH8\u002Bf2G4WlwKlvt0\u002BQrDtwcPGH6\u002BeMnw788fsFp0gOJCLmAkSAQGMLAKCDAwAyNH0NwcXGyB2CAMYoPEQGyQGpBaLiUlqG4IgLvw\u002B9OnDHz6usB0FgAVIR6A9MIAvArQYOcwA4uQCW78/HEq99kTcwCkwMCocNDs7gAAAABJRU5ErkJggg==",
+              "WhenOpened": "2026-03-19T12:16:05.98Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

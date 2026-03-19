@@ -13,8 +13,7 @@ xmlport 50124 "Import Members XMLport"
     {
         textelement(RootNodeName)
         {   
-            
-            
+
             tableelement(Member; "Member Application")
             {
                 AutoSave = true;
