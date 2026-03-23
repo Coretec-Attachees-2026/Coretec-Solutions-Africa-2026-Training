@@ -88,6 +88,16 @@ page 50107 "Loan Application List"
 
     actions
     {
+        area(Processing)
+        {
+            action(LoanSummaryReport)
+            {
+                Caption = 'Loan Summary by Member';
+                ToolTip = 'View a summary report of all members with their loans listed underneath.';
+                Image = Report;
+                RunObject = report "Loan Summary by Member";
+            }
+        }
         area(Navigation)
         {
             action(LoanLedgerEntries)
@@ -107,6 +117,11 @@ page 50107 "Loan Application List"
         }
         area(Promoted)
         {
+            group(Category_Process)
+            {
+                Caption = 'Process';
+                actionref(LoanSummaryReport_Promoted; LoanSummaryReport) { }
+            }
             group(Category_Navigate)
             {
                 Caption = 'Navigate';

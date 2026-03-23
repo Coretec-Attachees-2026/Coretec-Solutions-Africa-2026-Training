@@ -143,5 +143,18 @@ page 50103 "Member Card"
                 }
             }
         }
+
+        // --- FactBoxes Area ---
+        // Shows related information and details panels on the right side
+        area(FactBoxes)
+        {
+            // Member Loans FactBox
+            // Lists all loans for the current member, filtered by Member ID
+            part(MemberLoansPart; "Member Loans Part")
+            {
+                Caption = 'Member Loans';
+                SubPageLink = "Member ID" = field("Member ID");
+            }
+        }
     }
 }
