@@ -1,4 +1,6 @@
 report 50136 "Loan Summary by Member"
+// uses nested loops
+// gets one member, then gets all loans for that member
 {
     Caption = 'Loan Summary by Member';
     UsageCategory = ReportsAndAnalysis;
@@ -9,6 +11,7 @@ report 50136 "Loan Summary by Member"
     {
         dataitem(Member; Member)
         {
+            PrintOnlyIfDetail = true;
             column(FirstName; "First Name")
             {
 
@@ -24,6 +27,9 @@ report 50136 "Loan Summary by Member"
             dataitem(JoinWithLoanTable; "Loan Application")
             {
                 DataItemLink = "Member ID" = field("Member ID");
+                column(Loan_Application_No_;"Loan Application No.") {
+
+                }
                 column(LoanAmount; "Loan Amount")
                 {
 
@@ -46,8 +52,8 @@ report 50136 "Loan Summary by Member"
 
     requestpage
     {
-        AboutTitle = 'Teaching tip title';
-        AboutText = 'Teaching tip content';
+        AboutTitle = 'Loan applicatoin by member';
+        AboutText = 'Shows a summary of every member loans';
         layout
         {
             area(Content)

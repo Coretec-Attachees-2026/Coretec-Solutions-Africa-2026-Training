@@ -1,4 +1,6 @@
 query 50130 "Member Loan Query"
+// uses sql join types, queries translate directly to SQL
+// Queries with one statements for all records
 {
     QueryType = Normal;
     Caption = 'Member Loan Query';

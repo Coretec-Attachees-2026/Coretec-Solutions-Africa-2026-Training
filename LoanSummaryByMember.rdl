@@ -703,6 +703,9 @@ End Function
         <Field Name="ID_Number">
           <DataField>ID_Number</DataField>
         </Field>
+        <Field Name="Loan_Application_No_">
+          <DataField>Loan_Application_No_</DataField>
+        </Field>
         <Field Name="LoanAmount">
           <DataField>LoanAmount</DataField>
         </Field>

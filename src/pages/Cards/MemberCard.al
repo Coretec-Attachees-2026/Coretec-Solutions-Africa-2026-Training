@@ -1,38 +1,10 @@
-// ============================================================
-// Page 50103 - Member Card
-// ============================================================
-// PURPOSE: Shows the FULL DETAILS of ONE member.
-//          This is a READ-ONLY view — member data was copied
-//          from the approved application and can't be changed here.
-//
-// HOW MEMBERS GET CREATED:
-//   1. Someone fills out a Member Application (Pag50101)
-//   2. An admin clicks "Approve" on the application
-//   3. The system copies all data into a Member record
-//   4. That member appears here — fully read-only
-//
-// KEY CONCEPT - "Editable = false" on the whole page:
-//   This makes EVERY field on the page read-only.
-//   Unlike the Application Card (where only some fields are
-//   read-only), the entire Member Card prevents editing.
-//   This is because member data should only change through
-//   proper business processes, not manual edits.
-//
-// SECTIONS:
-//   1. General Information — ID, name, status, registration date
-//   2. Personal Information — name, DOB, ID number
-//   3. Contact Information — phone, email, address
-//   4. Employment Information — job, income, category
-//   5. Account Information — current balance
-// ============================================================
-
 page 50103 "Member Card"
 {
-    Caption = 'Member';                    // Title shown at the top
-    PageType = Card;                       // Shows ONE member in detail
-    SourceTable = "Member";                // Data comes from the Member table
+    Caption = 'Member';
+    PageType = Card;
+    SourceTable = "Member";
     ApplicationArea = All;
-    Editable = false;                      // Entire page is read-only
+    Editable = false;
 
     layout
     {
@@ -143,5 +115,80 @@ page 50103 "Member Card"
                 }
             }
         }
+        area(FactBoxes)
+        {
+            part(LoanInfo; "Member Loans Part")
+            {
+                Caption = 'Loan Details';
+                ApplicationArea = all;
+                SubPageLink = "Member ID" = field("Member ID"); // loan == member
+            }
+            part(LoanStats; "Member Loans Statistics") {
+                Caption = 'Dues';
+                ApplicationArea = all;
+                SubPageLink = "Member ID" = field("Member ID");
+            }
+        }
     }
+}
+
+page 50138 "Member Loans Part"
+{
+    Caption = 'Member Loans';
+    PageType = CardPart;
+    SourceTable = "Loan Application";
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Control1)
+            {
+                field("Loan Application No."; Rec."Loan Application No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("application Date"; Rec."Application Date")
+                {
+                    ApplicationArea = All;
+                }
+            }
+
+        }
+
+    }
+
+}
+
+page 50139 "Member Loans Statistics"
+{
+    Caption = 'Integer Statistics';
+    PageType = CardPart;
+    SourceTable = "Loan Application";
+
+    layout
+    {
+        area(Content)
+        {
+            cuegroup("Loan Stats")
+            {
+                field("LoanAmt"; Rec."Loan Amount")
+                {
+                    ApplicationArea = All;
+                }
+                field(ApprovalStatus; Rec.Status)
+                {
+                    ApplicationArea = All;
+                }
+            }
+
+        }
+    }
+    var
+    trigger OnAfterGetRecord()
+    var
+        DaysRemaining: Integer;
+    begin
+        // Get days remaining till due date
+    end;
 }
