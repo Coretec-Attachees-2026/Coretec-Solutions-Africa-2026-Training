@@ -143,6 +143,14 @@ page 50103 "Member Card"
                 }
             }
         }
+        area(FactBoxes)
+        {
+            part(MemberLoansPart; "Member Loans Part")
+            {
+                SubPageLink = "Member ID" = field("Member ID");
+                ApplicationArea = All;
+            }
+        }
     }
 
     actions

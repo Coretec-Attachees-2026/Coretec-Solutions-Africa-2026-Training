@@ -104,6 +104,13 @@ page 50107 "Loan Application List"
                 Image = Setup;
                 RunObject = page "Member Setup";
             }
+            action(LoanSummaryByMemberReport)
+            {
+                Caption = 'Loan Summary by Member';
+                ToolTip = 'View a summary report of all members and their loans.';
+                Image = Report;
+                RunObject = report "Loan Summary by Member";
+            }
         }
         area(Promoted)
         {
@@ -112,6 +119,7 @@ page 50107 "Loan Application List"
                 Caption = 'Navigate';
                 actionref(LoanLedgerEntries_Promoted; LoanLedgerEntries) { }
                 actionref(MemberSetup_Promoted; MemberSetup) { }
+                actionref(LoanSummaryByMemberReport_Promoted; LoanSummaryByMemberReport) { }
             }
         }
     }

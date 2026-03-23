@@ -18,11 +18,16 @@
 //   2. ApproveApplication()           → Approves an application and creates the member
 //   3. RejectApplication()            → Rejects an application with a reason
 //   4. SendWelcomeEmailToMember()     → Sends a welcome email after member creation
-//   5. GenerateMemberID()             → Creates unique member IDs like MEM-20260303-0001
+//   5. SendRejectionEmailToApplicant()→ Sends rejection email with reason
+//   6. GenerateMemberID()             → Creates unique member IDs like MEM-20260303-0001
 // ============================================================
 
 codeunit 50100 "Member Management"
 {
+    Permissions = tabledata "Sent Email" = RIMD,
+                  tabledata "Email Outbox" = RIMD,
+                  tabledata "Email Related Record" = RIMD,
+                  tabledata "Email Account" = R;
 
     // -------------------------------------------------------
     // TransferApplicationToMember
@@ -178,6 +183,7 @@ codeunit 50100 "Member Management"
     procedure RejectApplication(ApplicationID: Code[20]; RejectionReason: Text[250])
     var
         MemberApp: Record "Member Application";
+        RejectionEmailStatusText: Text[250];
     begin
         if not MemberApp.Get(ApplicationID) then
             Error('Member Application %1 not found', ApplicationID);
@@ -192,10 +198,12 @@ codeunit 50100 "Member Management"
         MemberApp."Approval Date" := Today;  // Records when the decision was made
         MemberApp.Modify();
 
+        SendRejectionEmailToApplicant(MemberApp, RejectionReason, RejectionEmailStatusText);
+
         LogAuditEntry('Rejected', 'Member Application', ApplicationID,
             StrSubstNo('Application %1 rejected. Reason: %2', ApplicationID, RejectionReason));
 
-        Message('Application %1 has been rejected', ApplicationID);
+        Message('Application %1 has been rejected.\%2', ApplicationID, RejectionEmailStatusText);
     end;
 
     // -------------------------------------------------------
@@ -220,14 +228,9 @@ codeunit 50100 "Member Management"
     // -------------------------------------------------------
     local procedure SendWelcomeEmailToMember(Member: Record "Member"; var WelcomeEmailStatusText: Text[250])
     var
-        EmailAccount: Record "Email Account";
         EmailMessage: Codeunit "Email Message";
-        Subject: Text[100];
-        Body: Text;
         SendFailureDetails: Text;
     begin
-        // Skip silently if no email address exists.
-        // Member creation should not fail because contact details are incomplete.
         if Member.Email = '' then begin
             WelcomeEmailStatusText := StrSubstNo(
                 'Member %1 created. Email not sent because no email address is available for this member.',
@@ -235,52 +238,116 @@ codeunit 50100 "Member Management"
             exit;
         end;
 
-        Subject := 'Welcome to BOOMPOP SACCO - Registration Confirmed';
-        Body := 'Dear ' + Member."Full Name" + ',<br/><br/>';
-        Body += 'Congratulations! Your membership application has been approved.<br/>';
-        Body += 'Your Member ID is: ' + Member."Member ID" + '<br/><br/>';
-        Body += 'You can now access your account and apply for loans.<br/><br/>';
-        Body += 'Best regards,<br/>';
-        Body += 'The BOOMPOP SACCO Team';
-
-        // "true" means the body is HTML, so <br/> renders as line breaks.
-        EmailMessage.Create(Member.Email, Subject, Body, true);
-
-        if TrySendWelcomeEmail(EmailMessage) then
-            WelcomeEmailStatusText := StrSubstNo('Member %1 created and welcome email sent.', Member."Member ID")
-        else begin
-            SendFailureDetails := GetLastErrorText();
-
-            if EmailAccount.IsEmpty() then
-                WelcomeEmailStatusText := StrSubstNo(
-                    'Member %1 created. Email not sent because no Email Account is configured in Business Central. Search "Email Accounts" and add an account.',
-                    Member."Member ID")
-            else begin
-                if SendFailureDetails = '' then
-                    WelcomeEmailStatusText := StrSubstNo(
-                        'Member %1 created. Email account exists, but sending failed for another reason. Check the email configuration and try again.',
-                        Member."Member ID")
-                else
-                    WelcomeEmailStatusText := StrSubstNo(
-                        'Member %1 created. Email account exists, but sending failed. Error: %2',
-                        Member."Member ID",
-                        CopyStr(SendFailureDetails, 1, 140));
-            end;
-        end;
+        EmailMessage.Create(
+            Member."Email",
+            'Welcome to the SACCO!',
+            StrSubstNo('Dear %1 %2, your membership has been approved. Welcome!', Member."First Name", Member."Last Name")
+        );
+        if TrySendEmail(EmailMessage, SendFailureDetails) then
+            WelcomeEmailStatusText := StrSubstNo('Member %1 created successfully. Welcome email sent.', Member."Member ID")
+        else
+            WelcomeEmailStatusText := StrSubstNo('Member %1 created successfully. Email not sent: %2', Member."Member ID", SendFailureDetails);
     end;
 
     // -------------------------------------------------------
-    // TrySendWelcomeEmail
+    // SendRejectionEmailToApplicant
     // -------------------------------------------------------
-    // PURPOSE: Wraps Email.Send() in a TryFunction so email configuration
-    //          problems do not roll back member creation.
+    // PURPOSE: Sends a rejection email to the applicant containing
+    //          the rejection reason and application reference.
     // -------------------------------------------------------
+    local procedure SendRejectionEmailToApplicant(MemberApp: Record "Member Application"; RejectionReason: Text[250]; var RejectionEmailStatusText: Text[250])
+    var
+        EmailMessage: Codeunit "Email Message";
+        SendFailureDetails: Text;
+    begin
+        if MemberApp.Email = '' then begin
+            RejectionEmailStatusText := 'Rejection email not sent because the applicant has no email address.';
+            exit;
+        end;
+
+        EmailMessage.Create(
+            MemberApp."Email",
+            'Membership Application Rejected',
+            StrSubstNo('Dear %1 %2, your application was rejected. Reason: %3', MemberApp."First Name", MemberApp."Last Name", RejectionReason)
+        );
+        if TrySendEmail(EmailMessage, SendFailureDetails) then
+            RejectionEmailStatusText := 'Rejection email sent successfully.'
+        else
+            RejectionEmailStatusText := 'Rejection completed. Email not sent: ' + SendFailureDetails;
+    end;
+
+    // -------------------------------------------------------
+    // TrySendEmail / TrySendEmailInternal
+    // -------------------------------------------------------
+    // PURPOSE: Sends an email in a non-blocking way and returns detailed
+    //          error text when sending fails.
+    // -------------------------------------------------------
+    local procedure TrySendEmail(var EmailMessage: Codeunit "Email Message"; var SendFailureDetails: Text): Boolean
+    var
+        EmailAccount: Record "Email Account";
+    begin
+        if not HasEmailSendPermissions(SendFailureDetails) then
+            exit(false);
+
+        ClearLastError();
+        if TrySendEmailInternalDefaultScenario(EmailMessage) then
+            exit(true);
+
+        SendFailureDetails := GetLastErrorText();
+
+        // Fallback path: if default scenario is not mapped correctly,
+        // try sending through the first configured account directly.
+        if EmailAccount.FindFirst() then begin
+            ClearLastError();
+            if TrySendEmailInternalAccount(EmailMessage, EmailAccount."Account Id", EmailAccount.Connector) then
+                exit(true);
+
+            if GetLastErrorText() <> '' then
+                SendFailureDetails := GetLastErrorText();
+        end;
+
+        exit(false);
+    end;
+
+    local procedure HasEmailSendPermissions(var FailureText: Text): Boolean
+    var
+        [SecurityFiltering(SecurityFilter::Ignored)]
+        SentEmail: Record "Sent Email";
+        [SecurityFiltering(SecurityFilter::Ignored)]
+        EmailOutbox: Record "Email Outbox";
+        [SecurityFiltering(SecurityFilter::Ignored)]
+        EmailRelatedRecord: Record "Email Related Record";
+    begin
+        if not SentEmail.ReadPermission() or
+           not SentEmail.WritePermission() or
+           not EmailOutbox.ReadPermission() or
+           not EmailOutbox.WritePermission() or
+           not EmailRelatedRecord.ReadPermission() or
+           not EmailRelatedRecord.WritePermission()
+        then begin
+            FailureText := 'Email not sent: the current user lacks required permissions for Sent Email, Email Outbox, or Email Related Record. Assign an email-capable permission set and try again.';
+            exit(false);
+        end;
+
+        exit(true);
+    end;
+
     [TryFunction]
-    local procedure TrySendWelcomeEmail(var EmailMessage: Codeunit "Email Message")
+    local procedure TrySendEmailInternalDefaultScenario(var EmailMessage: Codeunit "Email Message")
     var
         Email: Codeunit Email;
     begin
-        Email.Send(EmailMessage);
+        if not Email.Send(EmailMessage, Enum::"Email Scenario"::Default) then
+            Error('Email send returned false using Default scenario.');
+    end;
+
+    [TryFunction]
+    local procedure TrySendEmailInternalAccount(var EmailMessage: Codeunit "Email Message"; EmailAccountId: Guid; EmailConnector: Enum "Email Connector")
+    var
+        Email: Codeunit Email;
+    begin
+        if not Email.Send(EmailMessage, EmailAccountId, EmailConnector) then
+            Error('Email send returned false using a configured email account.');
     end;
 
     // -------------------------------------------------------
