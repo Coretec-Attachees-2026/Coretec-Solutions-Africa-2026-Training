@@ -222,7 +222,9 @@ table 50103 "Loan Application"
     // -------------------------------------------------------
     local procedure CalculatePayments()
     begin
-        if ("Loan Amount" = 0) or ("Loan Term (Months)" = 0) then begin
+        // SAFETY CHECK: Prevent division by zero
+        // If either amount or term is zero, set all payment fields to zero and exit
+        if ("Loan Amount" <= 0) or ("Loan Term (Months)" <= 0) then begin
             "Monthly Payment" := 0;
             "Total Repayment" := 0;
             "Total Interest" := 0;
@@ -230,9 +232,15 @@ table 50103 "Loan Application"
         end;
 
         // Simple interest formula
+        // Total Interest = Loan Amount × (Interest Rate / 100) × (Term in years)
         "Total Interest" := "Loan Amount" * ("Interest Rate (%)" / 100) * ("Loan Term (Months)" / 12);
         "Total Repayment" := "Loan Amount" + "Total Interest";
-        "Monthly Payment" := "Total Repayment" / "Loan Term (Months)";
+
+        // SAFE DIVISION: Additional check before dividing to prevent runtime errors
+        if "Loan Term (Months)" > 0 then
+            "Monthly Payment" := "Total Repayment" / "Loan Term (Months)"
+        else
+            "Monthly Payment" := 0;
     end;
 
     // -------------------------------------------------------
