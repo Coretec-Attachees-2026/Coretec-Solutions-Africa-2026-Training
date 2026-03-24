@@ -131,9 +131,10 @@ page 50101 "Member Application Card"
             // Financial details for the application
             group("Employment Information")
             {
-                field("Occupation"; rec."Occupation")
+                field("Occupation Code"; rec."Occupation Code")
                 {
-                    ToolTip = 'Specifies the applicant''s occupation';
+                    ApplicationArea = All;
+                    ToolTip = 'Specifies the applicant''s occupation. Click the dropdown to select from the occupation list.';
                 }
                 field("Annual Income"; rec."Annual Income")
                 {

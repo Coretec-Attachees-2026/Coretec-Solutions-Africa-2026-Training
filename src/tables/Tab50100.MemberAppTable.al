@@ -145,6 +145,15 @@ table 50100 "Member Application"
         field(16; "Occupation"; Text[100])
         {
             Caption = 'Occupation';
+            // DEPRECATED: Use "Occupation Code" instead
+            // This field is kept for backward compatibility
+        }
+        field(20; "Occupation Code"; Code[20])
+        {
+            Caption = 'Occupation Code';
+            // Links to Occupation Master table
+            // Shows only active occupations in the dropdown
+            TableRelation = "Occupation".Code where("Active" = const(true));
         }
         field(17; "Annual Income"; Decimal)
         {

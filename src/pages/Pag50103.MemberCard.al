@@ -119,9 +119,9 @@ page 50103 "Member Card"
             // --- Section 4: Employment Information ---
             group("Employment Information")
             {
-                field("Occupation"; rec."Occupation")
+                field("Occupation Code"; rec."Occupation Code")
                 {
-                    ToolTip = 'Specifies the member''s occupation';
+                    ToolTip = 'Specifies the member''s occupation (linked to occupation master)';
                 }
                 field("Annual Income"; rec."Annual Income")
                 {

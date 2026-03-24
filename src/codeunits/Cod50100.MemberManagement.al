@@ -96,7 +96,7 @@ codeunit 50100 "Member Management"
         Member."ID Number" := MemberApp."ID Number";
         Member."Registration Date" := CurrentDateTime;  // Now
         Member."Status" := Enum::"Member Status"::Active;  // Start as Active
-        Member."Occupation" := MemberApp."Occupation";
+        Member."Occupation Code" := MemberApp."Occupation Code";  // Copy occupation code from application
         Member."Annual Income" := MemberApp."Annual Income";
         Member."Member Category" := MemberApp."Member Category";
         Member."Account Balance" := 0;  // New member starts with zero balance
