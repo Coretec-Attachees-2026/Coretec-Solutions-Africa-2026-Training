@@ -1,25 +1,3 @@
-// ============================================================
-// Page 50102 - Member List
-// ============================================================
-// PURPOSE: Shows ALL registered members in a scrollable list.
-//          Members appear here AFTER their application is approved.
-//          (They start as applications → get approved → become members)
-//
-// KEY CONCEPT - "CardPageId":
-//   This tells BC: "When a user double-clicks a row in this list,
-//   open the 'Member Card' page to show full details."
-//   It creates the automatic link between List and Card pages.
-//   Without this, double-clicking a row would do nothing.
-//
-// KEY CONCEPT - "Editable = false":
-//   Members can't be edited from this list. Member data comes from
-//   the approved application and is managed elsewhere.
-//
-// COLUMNS SHOWN:
-//   Member ID, First/Last/Full Name, Email, Phone,
-//   Status (Active/Inactive/etc.), Registration Date, Account Balance
-// ============================================================
-
 page 50102 "Member List"
 {
     Caption = 'Members';                   // Title shown at the top

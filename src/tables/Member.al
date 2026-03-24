@@ -135,6 +135,7 @@ table 50101 "Member"
         field(16; "Occupation"; Text[100])
         {
             Caption = 'Occupation';
+            TableRelation = Occupation.Name;
         }
         field(17; "Annual Income"; Decimal)
         {
@@ -156,6 +157,7 @@ table 50101 "Member"
             // The member's current savings balance
             // This is updated by transactions, not typed in manually
         }
+
     }
 
     // -------------------------------------------------------
