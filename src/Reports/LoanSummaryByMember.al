@@ -1,5 +1,6 @@
-report 50115 "Loan Summary by Member"
-{
+report 50116 "Loan Summary by Member"
+{   
+    Caption = 'Loan Summary';
     UsageCategory = ReportsAndAnalysis;
     ApplicationArea = All;
     DefaultLayout = RDLC;
