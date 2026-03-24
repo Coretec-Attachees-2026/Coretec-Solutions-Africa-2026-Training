@@ -89,9 +89,9 @@ query 50116 "Member Application Overview"
             {
                 Caption = 'Rejection Reason';
             }
-            column(Occupation_App; Occupation)
+            column(OccupationCode_App; "Occupation Code")
             {
-                Caption = 'Occupation';
+                Caption = 'Occupation Code';
             }
             column(AnnualIncome_App; "Annual Income")
             {

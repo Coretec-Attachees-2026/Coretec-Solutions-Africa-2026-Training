@@ -114,9 +114,9 @@ page 50110 "Member Edit Card"
             // Member's job and income details
             group("Employment Information")
             {
-                field("Occupation"; rec."Occupation")
+                field("Occupation Code"; rec."Occupation Code")
                 {
-                    ToolTip = 'Specifies the member''s occupation';
+                    ToolTip = 'Specifies the member''s occupation from the lookup table';
                 }
                 field("Annual Income"; rec."Annual Income")
                 {

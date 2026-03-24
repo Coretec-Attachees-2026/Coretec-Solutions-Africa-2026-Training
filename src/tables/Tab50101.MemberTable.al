@@ -135,6 +135,16 @@ table 50101 "Member"
         field(16; "Occupation"; Text[100])
         {
             Caption = 'Occupation';
+            ObsoleteState = Pending;
+            ObsoleteReason = 'Use Occupation Code field instead for data consistency';
+            // DEPRECATED: Kept for backwards compatibility. Use Occupation Code for new records.
+        }
+        field(50; "Occupation Code"; Code[20])
+        {
+            Caption = 'Occupation Code';
+            // Links to Occupation master table for consistent job classification
+            // TableRelation = "Occupation".Code where Active = true (only show active occupations)
+            TableRelation = "Occupation".Code where(Active = const(true));
         }
         field(17; "Annual Income"; Decimal)
         {

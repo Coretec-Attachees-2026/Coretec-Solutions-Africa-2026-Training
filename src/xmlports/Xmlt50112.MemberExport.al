@@ -46,7 +46,7 @@ xmlport 50112 "Member Export"
                 fieldelement(Status; Member.Status) { }
 
                 // EMPLOYMENT
-                fieldelement(Occupation; Member.Occupation) { }
+                fieldelement(OccupationCode; Member."Occupation Code") { }
                 fieldelement(AnnualIncome; Member."Annual Income") { }
                 fieldelement(MemberCategory; Member."Member Category") { }
 

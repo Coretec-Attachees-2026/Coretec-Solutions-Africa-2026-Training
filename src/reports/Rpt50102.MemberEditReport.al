@@ -65,7 +65,7 @@ report 50102 "Member Edit Report"
                     EditedPhone := "Phone Number";
                     EditedCity := City;
                     EditedStatus := Status;
-                    EditedOccupation := Occupation;
+                    EditedOccupation := "Occupation Code";
                     EditedAnnualIncome := "Annual Income";
                     EditedMemberCategory := "Member Category";
                     FirstRecord := false;
@@ -76,7 +76,7 @@ report 50102 "Member Edit Report"
                 "Phone Number" := EditedPhone;
                 City := EditedCity;
                 Status := EditedStatus;
-                Occupation := EditedOccupation;
+                "Occupation Code" := EditedOccupation;
                 "Annual Income" := EditedAnnualIncome;
                 "Member Category" := EditedMemberCategory;
 
@@ -125,7 +125,7 @@ report 50102 "Member Edit Report"
                                     EditedPhone := MemberRec."Phone Number";
                                     EditedCity := MemberRec.City;
                                     EditedStatus := MemberRec.Status;
-                                    EditedOccupation := MemberRec.Occupation;
+                                    EditedOccupation := MemberRec."Occupation Code";
                                     EditedAnnualIncome := MemberRec."Annual Income";
                                     EditedMemberCategory := MemberRec."Member Category";
                                     CurrentMemberName := MemberRec."Full Name";

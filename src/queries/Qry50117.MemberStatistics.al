@@ -70,9 +70,9 @@ query 50117 "Member Statistics"
             {
                 Caption = 'Member Category Code';
             }
-            column(Occupation_Stat; Occupation)
+            column(OccupationCode_Stat; "Occupation Code")
             {
-                Caption = 'Occupation';
+                Caption = 'Occupation Code';
             }
             column(AnnualIncome_Stat; "Annual Income")
             {
