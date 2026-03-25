@@ -1,113 +1,112 @@
 // ============================================================
 // Codeunit 50101 - Member Category Initialization
 // ============================================================
-// PURPOSE: Pre-creates default member categories when the
-//          extension is first installed.
+// PURPOSE: Pre-creates default member categories AND default
+//          occupations when the extension is first installed.
 //
-// KEY CONCEPT - "SubType = Install":
-//   This tells BC to run this codeunit AUTOMATICALLY when the
-//   extension is installed. No one needs to click a button —
-//   the categories just appear ready to use.
+// CHANGE LOG:
+//   - Added InsertDefaultOccupations() called from
+//     OnInstallAppPerCompany so occupation data is ready
+//     alongside member categories.
 //
-// KEY CONCEPT - "OnInstallAppPerCompany":
-//   This trigger runs once PER COMPANY during installation.
-//   (Business Central can have multiple companies in one database)
-//
-// WHY PRE-CREATE CATEGORIES?
-//   Instead of making the admin type all categories manually,
-//   we set up sensible defaults. They can add/edit more later.
-//
-// WHAT GETS CREATED:
-//   REGULAR       = Employed Individual
-//   STUDENT       = Full-time Student  
-//   BUSINESS      = Self-employed/Entrepreneur
-//   SENIOR        = Retired/Elderly
-//   GROUP         = Small Group/Association
-//   INSTITUTIONAL = Organization/Company
-//   DORMANT       = Inactive Account
+// DEFAULT OCCUPATIONS SEEDED:
+//   TEACHER, NURSE, DOCTOR, ENGINEER, FARMER, BUSINESS,
+//   DRIVER, ACCOUNTANT, LAWYER, STUDENT, RETIRED, OTHER
 // ============================================================
 
 codeunit 50101 "Member Category Initialization"
 {
-    SubType = Install;  // Runs automatically during installation
+    SubType = Install;
 
-    // This trigger fires when the extension is installed per company
     trigger OnInstallAppPerCompany()
     begin
         InsertDefaultCategories();
+        InsertDefaultOccupations();  // ← NEW
     end;
 
     // -------------------------------------------------------
     // InsertDefaultCategories
     // -------------------------------------------------------
-    // Creates 7 default member categories.
-    // If categories already exist (re-install), it skips to avoid duplicates.
-    //
-    // PATTERN USED:
-    //   1. Init() - prepare an empty record
-    //   2. Set the fields
-    //   3. Insert() - save to database
-    //   Repeat for each category
-    // -------------------------------------------------------
     local procedure InsertDefaultCategories()
     var
         MemberCategory: Record "Member Category Master";
     begin
-        // Safety check: if categories already exist, don't create duplicates
         if MemberCategory.FindFirst() then
-            exit;  // exit = stop here, don't run the rest
+            exit;
 
-        // --- Category 1: Regular Member ---
-        MemberCategory.Init();           // Prepare empty record
-        MemberCategory."Code" := 'REGULAR';
-        MemberCategory."Description" := 'Regular Member - Employed Individual';
-        MemberCategory."Active" := true;
-        MemberCategory.Insert();         // Save to database
+        InsertCategory('REGULAR',       'Regular Member - Employed Individual');
+        InsertCategory('STUDENT',       'Student Member - Full-time Student');
+        InsertCategory('BUSINESS',      'Business Member - Self-employed/Entrepreneur');
+        InsertCategory('SENIOR',        'Senior Member - Retired/Elderly');
+        InsertCategory('GROUP',         'Group Member - Small Group/Association');
+        InsertCategory('INSTITUTIONAL', 'Institutional Member - Organization/Company');
+        InsertCategory('DORMANT',       'Dormant Member - Inactive Account');
 
-        // --- Category 2: Student Member ---
-        MemberCategory.Init();
-        MemberCategory."Code" := 'STUDENT';
-        MemberCategory."Description" := 'Student Member - Full-time Student';
-        MemberCategory."Active" := true;
-        MemberCategory.Insert();
-
-        // --- Category 3: Business Member ---
-        MemberCategory.Init();
-        MemberCategory."Code" := 'BUSINESS';
-        MemberCategory."Description" := 'Business Member - Self-employed/Entrepreneur';
-        MemberCategory."Active" := true;
-        MemberCategory.Insert();
-
-        // --- Category 4: Senior Member ---
-        MemberCategory.Init();
-        MemberCategory."Code" := 'SENIOR';
-        MemberCategory."Description" := 'Senior Member - Retired/Elderly';
-        MemberCategory."Active" := true;
-        MemberCategory.Insert();
-
-        // --- Category 5: Group Member ---
-        MemberCategory.Init();
-        MemberCategory."Code" := 'GROUP';
-        MemberCategory."Description" := 'Group Member - Small Group/Association';
-        MemberCategory."Active" := true;
-        MemberCategory.Insert();
-
-        // --- Category 6: Institutional Member ---
-        MemberCategory.Init();
-        MemberCategory."Code" := 'INSTITUTIONAL';
-        MemberCategory."Description" := 'Institutional Member - Organization/Company';
-        MemberCategory."Active" := true;
-        MemberCategory.Insert();
-
-        // --- Category 7: Dormant Member ---
-        MemberCategory.Init();
-        MemberCategory."Code" := 'DORMANT';
-        MemberCategory."Description" := 'Dormant Member - Inactive Account';
-        MemberCategory."Active" := true;
-        MemberCategory.Insert();
-
-        // Let the admin know it worked (only if there's a GUI session)
         if GuiAllowed then
-            Message('Member Categories initialized successfully');
+            Message('Member Categories initialized successfully.');
+    end;
+
+    local procedure InsertCategory(CategoryCode: Code[20]; CategoryDesc: Text[100])
+    var
+        MemberCategory: Record "Member Category Master";
+    begin
+        // KEY FIX: Insert() is VOID in AL — it cannot be used in an if-condition.
+        // Correct pattern: check with Get() first; only Insert() if the record is absent.
+        if MemberCategory.Get(CategoryCode) then
+            exit;
+
+        MemberCategory.Init();
+        MemberCategory."Code"        := CategoryCode;
+        MemberCategory."Description" := CategoryDesc;
+        MemberCategory."Active"      := true;
+        MemberCategory.Insert();   // void procedure — no return value
+    end;
+
+    // -------------------------------------------------------
+    // InsertDefaultOccupations  (NEW – Task E)
+    // -------------------------------------------------------
+    // Creates 12 common occupations to seed the Occupation table.
+    // Admins can add more or deactivate any of these from the
+    // Occupation List page.
+    // -------------------------------------------------------
+    local procedure InsertDefaultOccupations()
+    var
+        Occupation: Record "Occupation";
+    begin
+        // If occupations already exist (e.g. re-install), skip
+        if Occupation.FindFirst() then
+            exit;
+
+        InsertOccupation('TEACHER',     'Teacher / Educator');
+        InsertOccupation('NURSE',       'Nurse / Clinical Officer');
+        InsertOccupation('DOCTOR',      'Medical Doctor / Physician');
+        InsertOccupation('ENGINEER',    'Engineer / Technician');
+        InsertOccupation('FARMER',      'Farmer / Agriculturalist');
+        InsertOccupation('BUSINESS',    'Business Owner / Entrepreneur');
+        InsertOccupation('DRIVER',      'Driver / Transport Operator');
+        InsertOccupation('ACCOUNTANT',  'Accountant / Finance Officer');
+        InsertOccupation('LAWYER',      'Lawyer / Legal Practitioner');
+        InsertOccupation('STUDENT',     'Student / Intern');
+        InsertOccupation('RETIRED',     'Retired / Pensioner');
+        InsertOccupation('OTHER',       'Other / Not Listed');
+
+        if GuiAllowed then
+            Message('Default Occupations initialized successfully.');
+    end;
+
+    local procedure InsertOccupation(OccCode: Code[20]; OccDesc: Text[100])
+    var
+        Occupation: Record "Occupation";
+    begin
+        // KEY FIX: Insert() is VOID in AL — cannot be used in an if-condition.
+        // Check with Get() first; only Insert() if the record is absent.
+        if Occupation.Get(OccCode) then
+            exit;
+
+        Occupation.Init();
+        Occupation."Code"        := OccCode;
+        Occupation."Description" := OccDesc;
+        Occupation."Active"      := true;
+        Occupation.Insert();   // void procedure — no return value
     end;
 }

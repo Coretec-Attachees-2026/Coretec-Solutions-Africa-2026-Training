@@ -1,89 +1,78 @@
 // ============================================================
 // Page 50103 - Member Card
 // ============================================================
-// PURPOSE: Shows the FULL DETAILS of ONE member.
-//          This is a READ-ONLY view — member data was copied
-//          from the approved application and can't be changed here.
+// PURPOSE: Full detail view of ONE member.
 //
-// HOW MEMBERS GET CREATED:
-//   1. Someone fills out a Member Application (Pag50101)
-//   2. An admin clicks "Approve" on the application
-//   3. The system copies all data into a Member record
-//   4. That member appears here — fully read-only
+// CHANGE LOG:
+//   Task D – FactBox: "Member Loans Part" (Pag50116) added in
+//            area(FactBoxes), filtered by current Member ID.
+//            Shows all loans for the member on the right panel.
 //
-// KEY CONCEPT - "Editable = false" on the whole page:
-//   This makes EVERY field on the page read-only.
-//   Unlike the Application Card (where only some fields are
-//   read-only), the entire Member Card prevents editing.
-//   This is because member data should only change through
-//   proper business processes, not manual edits.
+//   Task E – Employment group now shows "Occupation Code" (lookup
+//            dropdown from the Occupation master table) instead
+//            of the free-text "Occupation" field.
 //
-// SECTIONS:
-//   1. General Information — ID, name, status, registration date
-//   2. Personal Information — name, DOB, ID number
-//   3. Contact Information — phone, email, address
-//   4. Employment Information — job, income, category
-//   5. Account Information — current balance
+// NOTE: The page is still Editable = false overall.
+//       Occupation Code + Status changes happen through the
+//       dedicated Member Detail Update report or through the
+//       Suspend / Reactivate / Close actions.
 // ============================================================
 
 page 50103 "Member Card"
 {
-    Caption = 'Member';                    // Title shown at the top
-    PageType = Card;                       // Shows ONE member in detail
-    SourceTable = "Member";                // Data comes from the Member table
+    Caption = 'Member';
+    PageType = Card;
+    SourceTable = "Member";
     ApplicationArea = All;
-    Editable = false;                      // Entire page is read-only
+    Editable = false;
 
     layout
     {
         area(Content)
         {
             // --- Section 1: General Information ---
-            // Quick overview of the member
             group("General Information")
             {
                 field("Member ID"; rec."Member ID")
                 {
-                    ToolTip = 'Specifies the unique member identifier';
+                    ToolTip = 'Specifies the unique member identifier.';
                 }
                 field("Full Name"; rec."Full Name")
                 {
-                    ToolTip = 'Specifies the member''s full name';
+                    ToolTip = 'Specifies the member''s full name.';
                 }
                 field("Status"; rec."Status")
                 {
-                    ToolTip = 'Specifies the member''s current status';
+                    ToolTip = 'Specifies the member''s current status.';
                 }
                 field("Registration Date"; rec."Registration Date")
                 {
-                    ToolTip = 'Specifies when the member was registered';
+                    ToolTip = 'Specifies when the member was registered.';
                 }
-                // Links back to the original application for audit trail
                 field("Application ID"; rec."Application ID")
                 {
-                    ToolTip = 'Specifies the original application ID';
+                    ToolTip = 'Specifies the original application that created this member.';
                 }
             }
 
             // --- Section 2: Personal Information ---
-            // Copied from the approved application
             group("Personal Information")
             {
                 field("First Name"; rec."First Name")
                 {
-                    ToolTip = 'Specifies the member''s first name';
+                    ToolTip = 'Specifies the member''s first name.';
                 }
                 field("Last Name"; rec."Last Name")
                 {
-                    ToolTip = 'Specifies the member''s last name';
+                    ToolTip = 'Specifies the member''s last name.';
                 }
                 field("Date of Birth"; rec."Date of Birth")
                 {
-                    ToolTip = 'Specifies the member''s date of birth';
+                    ToolTip = 'Specifies the member''s date of birth.';
                 }
                 field("ID Number"; rec."ID Number")
                 {
-                    ToolTip = 'Specifies the member''s ID or passport number';
+                    ToolTip = 'Specifies the member''s national ID or passport number.';
                 }
             }
 
@@ -92,67 +81,84 @@ page 50103 "Member Card"
             {
                 field("Phone Number"; rec."Phone Number")
                 {
-                    ToolTip = 'Specifies the member''s phone number';
+                    ToolTip = 'Specifies the member''s phone number.';
                 }
                 field("Email"; rec."Email")
                 {
-                    ToolTip = 'Specifies the member''s email address';
+                    ToolTip = 'Specifies the member''s email address.';
                 }
                 field("Address"; rec."Address")
                 {
-                    ToolTip = 'Specifies the member''s street address';
+                    ToolTip = 'Specifies the member''s street address.';
                 }
                 field("City"; rec."City")
                 {
-                    ToolTip = 'Specifies the member''s city';
+                    ToolTip = 'Specifies the member''s city.';
                 }
                 field("Postal Code"; rec."Postal Code")
                 {
-                    ToolTip = 'Specifies the member''s postal code';
+                    ToolTip = 'Specifies the member''s postal code.';
                 }
                 field("Country"; rec."Country")
                 {
-                    ToolTip = 'Specifies the member''s country';
+                    ToolTip = 'Specifies the member''s country.';
                 }
             }
 
             // --- Section 4: Employment Information ---
             group("Employment Information")
             {
-                field("Occupation"; rec."Occupation")
+                // Task E: show validated Occupation Code (dropdown) instead
+                // of the free-text Occupation field.
+                field("Occupation Code"; rec."Occupation Code")
                 {
-                    ToolTip = 'Specifies the member''s occupation';
+                    ToolTip = 'Specifies the member''s occupation from the Occupation master list.';
                 }
                 field("Annual Income"; rec."Annual Income")
                 {
-                    ToolTip = 'Specifies the member''s annual income';
+                    ToolTip = 'Specifies the member''s annual income.';
                 }
                 field("Member Category"; rec."Member Category")
                 {
-                    ToolTip = 'Specifies the member category';
+                    ToolTip = 'Specifies the member category (e.g. REGULAR, STUDENT).';
                 }
             }
 
             // --- Section 5: Account Information ---
-            // Shows the member's current financial balance
             group("Account Information")
             {
                 field("Account Balance"; rec."Account Balance")
                 {
-                    ToolTip = 'Specifies the member''s current account balance';
+                    ToolTip = 'Specifies the member''s current account balance.';
                 }
             }
         }
+
+        // -------------------------------------------------------
+        // Task D: FactBox – Member Loans Part
+        // -------------------------------------------------------
+        // SubPageLink filters the ListPart to show ONLY loans
+        // belonging to the member currently open on this Card.
+        // KEY CONCEPT - "part()":
+        //   Embeds another page (Pag50116) in the FactBox area.
+        //   SubPageLink = "Member ID" = field("Member ID") is the
+        //   equivalent of "WHERE Loan Application."Member ID" =
+        //   Member."Member ID"" — it keeps the sub-page in sync.
+        // -------------------------------------------------------
         area(FactBoxes)
         {
             part(MemberLoansPart; "Member Loans Part")
             {
-                SubPageLink = "Member ID" = field("Member ID");
                 ApplicationArea = All;
+                Caption = 'Loans';
+                SubPageLink = "Member ID" = field("Member ID");
             }
         }
     }
 
+    // -------------------------------------------------------
+    // ACTIONS
+    // -------------------------------------------------------
     actions
     {
         area(Processing)
@@ -176,14 +182,14 @@ page 50103 "Member Card"
                     Rec.Status := Enum::"Member Status"::Suspended;
                     Rec.Modify(true);
 
-                    // Log audit trail for member suspension
                     AuditLog.Init();
-                    AuditLog."Date-Time" := CurrentDateTime;
-                    AuditLog."User ID" := CopyStr(UserId, 1, 50);
-                    AuditLog."Action Type" := 'Suspended';
+                    AuditLog."Date-Time"     := CurrentDateTime;
+                    AuditLog."User ID"       := CopyStr(UserId, 1, 50);
+                    AuditLog."Action Type"   := 'Suspended';
                     AuditLog."Document Type" := 'Member';
-                    AuditLog."Document No." := Rec."Member ID";
-                    AuditLog.Description := StrSubstNo('Member %1 (%2) suspended.', Rec."Member ID", Rec."Full Name");
+                    AuditLog."Document No."  := Rec."Member ID";
+                    AuditLog.Description     :=
+                        StrSubstNo('Member %1 (%2) suspended.', Rec."Member ID", Rec."Full Name");
                     AuditLog.Insert(true);
 
                     CurrPage.Update(false);
@@ -211,14 +217,14 @@ page 50103 "Member Card"
                     Rec.Status := Enum::"Member Status"::Active;
                     Rec.Modify(true);
 
-                    // Log audit trail for member reactivation
                     AuditLog.Init();
-                    AuditLog."Date-Time" := CurrentDateTime;
-                    AuditLog."User ID" := CopyStr(UserId, 1, 50);
-                    AuditLog."Action Type" := 'Reactivated';
+                    AuditLog."Date-Time"     := CurrentDateTime;
+                    AuditLog."User ID"       := CopyStr(UserId, 1, 50);
+                    AuditLog."Action Type"   := 'Reactivated';
                     AuditLog."Document Type" := 'Member';
-                    AuditLog."Document No." := Rec."Member ID";
-                    AuditLog.Description := StrSubstNo('Member %1 (%2) reactivated.', Rec."Member ID", Rec."Full Name");
+                    AuditLog."Document No."  := Rec."Member ID";
+                    AuditLog.Description     :=
+                        StrSubstNo('Member %1 (%2) reactivated.', Rec."Member ID", Rec."Full Name");
                     AuditLog.Insert(true);
 
                     CurrPage.Update(false);
@@ -239,13 +245,10 @@ page 50103 "Member Card"
                     AuditLog: Record "Application Audit Log";
                     LoanApp: Record "Loan Application";
                 begin
-                    // Check for outstanding loan balance
                     if Rec."Account Balance" < 0 then
-                        Error('Cannot close membership while member has an outstanding loan balance of %1.', Rec."Account Balance");
+                        Error('Cannot close membership while member has an outstanding loan balance of %1.',
+                            Rec."Account Balance");
 
-                    // Check for any active loans (Disbursed or Partially Paid)
-                    // A member might have a zero account balance but still have
-                    // loans in progress that haven't been fully repaid.
                     LoanApp.SetRange("Member ID", Rec."Member ID");
                     LoanApp.SetFilter(Status, '%1|%2',
                         Enum::"Loan Application Status"::Disbursed,
@@ -254,21 +257,22 @@ page 50103 "Member Card"
                         Error('Cannot close membership — member has active loan %1 with status %2.',
                             LoanApp."Loan Application No.", LoanApp.Status);
 
-                    if not Confirm('Are you sure you want to CLOSE membership for %1 (%2)?\\This action cannot be undone.',
+                    if not Confirm(
+                        'Are you sure you want to CLOSE membership for %1 (%2)?\This cannot be undone.',
                         false, Rec."Member ID", Rec."Full Name") then
                         exit;
 
                     Rec.Status := Enum::"Member Status"::Closed;
                     Rec.Modify(true);
 
-                    // Log audit trail for membership closure
                     AuditLog.Init();
-                    AuditLog."Date-Time" := CurrentDateTime;
-                    AuditLog."User ID" := CopyStr(UserId, 1, 50);
-                    AuditLog."Action Type" := 'Closed';
+                    AuditLog."Date-Time"     := CurrentDateTime;
+                    AuditLog."User ID"       := CopyStr(UserId, 1, 50);
+                    AuditLog."Action Type"   := 'Closed';
                     AuditLog."Document Type" := 'Member';
-                    AuditLog."Document No." := Rec."Member ID";
-                    AuditLog.Description := StrSubstNo('Membership closed for %1 (%2).', Rec."Member ID", Rec."Full Name");
+                    AuditLog."Document No."  := Rec."Member ID";
+                    AuditLog.Description     :=
+                        StrSubstNo('Membership closed for %1 (%2).', Rec."Member ID", Rec."Full Name");
                     AuditLog.Insert(true);
 
                     CurrPage.Update(false);

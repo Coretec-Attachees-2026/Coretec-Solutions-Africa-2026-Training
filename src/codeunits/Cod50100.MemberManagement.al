@@ -1,3 +1,4 @@
+
 // ============================================================
 // Codeunit 50100 - Member Management
 // ============================================================
@@ -17,17 +18,11 @@
 //   1. TransferApplicationToMember()  → Copies approved application data to Member table
 //   2. ApproveApplication()           → Approves an application and creates the member
 //   3. RejectApplication()            → Rejects an application with a reason
-//   4. SendWelcomeEmailToMember()     → Sends a welcome email after member creation
-//   5. SendRejectionEmailToApplicant()→ Sends rejection email with reason
-//   6. GenerateMemberID()             → Creates unique member IDs like MEM-20260303-0001
+//   4. GenerateMemberID()             → Creates unique member IDs like MEM-20260303-0001
 // ============================================================
 
 codeunit 50100 "Member Management"
 {
-    Permissions = tabledata "Sent Email" = RIMD,
-                  tabledata "Email Outbox" = RIMD,
-                  tabledata "Email Related Record" = RIMD,
-                  tabledata "Email Account" = R;
 
     // -------------------------------------------------------
     // TransferApplicationToMember
@@ -41,10 +36,6 @@ codeunit 50100 "Member Management"
     //
     // RETURNS:
     //   Boolean - true if transfer was successful
-    //
-    // OUTPUT PARAMETER:
-    //   WelcomeEmailStatusText - final message describing whether the
-    //   member was created and whether the welcome email was sent.
     //
     // KEY CONCEPT - "Record":
     //   A Record variable (like MemberApp, Member) represents a row
@@ -61,7 +52,7 @@ codeunit 50100 "Member Management"
     // KEY CONCEPT - ".Insert()":
     //   Saves the new record to the database.
     // -------------------------------------------------------
-    procedure TransferApplicationToMember(ApplicationID: Code[20]; var WelcomeEmailStatusText: Text[250]): Boolean
+    procedure TransferApplicationToMember(ApplicationID: Code[20]): Boolean
     var
         MemberApp: Record "Member Application";   // The application to read from
         Member: Record "Member";                    // The new member to create
@@ -104,7 +95,7 @@ codeunit 50100 "Member Management"
         Member."Postal Code" := MemberApp."Postal Code";
         Member."Country" := MemberApp."Country";
         Member."ID Number" := MemberApp."ID Number";
-        Member."Registration Date" := Today;  // Date of member creation
+        Member."Registration Date" := Today;  // Now (Date type)
         Member."Status" := Enum::"Member Status"::Active;  // Start as Active
         Member."Occupation" := MemberApp."Occupation";
         Member."Annual Income" := MemberApp."Annual Income";
@@ -113,11 +104,6 @@ codeunit 50100 "Member Management"
 
         // Step 6: Save to database
         Member.Insert();
-
-        // Step 7: Send welcome email to the new member
-        // Email is part of the onboarding experience, but it must NOT block
-        // member creation if Business Central email setup is missing.
-        SendWelcomeEmailToMember(Member, WelcomeEmailStatusText);
 
         exit(true);  // Return success
     end;
@@ -147,7 +133,6 @@ codeunit 50100 "Member Management"
     procedure ApproveApplication(ApplicationID: Code[20])
     var
         MemberApp: Record "Member Application";
-        WelcomeEmailStatusText: Text[250];
     begin
         // Find the application
         if not MemberApp.Get(ApplicationID) then
@@ -159,15 +144,12 @@ codeunit 50100 "Member Management"
 
         // Update the application status to Approved
         MemberApp.Status := Enum::"Member Application Status"::Approved;
-        MemberApp."Approval Date" := Today;
+        MemberApp."Approval Date" := Today;  // Records when the decision was made (Date type)
         MemberApp.Modify();  // Save the changes
 
         // Create the member from the approved application
-        if TransferApplicationToMember(ApplicationID, WelcomeEmailStatusText) then begin
-            LogAuditEntry('Approved', 'Member Application', ApplicationID,
-                StrSubstNo('Application %1 approved and member created.', ApplicationID));
-            Message('%1', WelcomeEmailStatusText);
-        end;
+        if TransferApplicationToMember(ApplicationID) then
+            Message('Application %1 approved and member created successfully', ApplicationID);
     end;
 
     // -------------------------------------------------------
@@ -183,7 +165,6 @@ codeunit 50100 "Member Management"
     procedure RejectApplication(ApplicationID: Code[20]; RejectionReason: Text[250])
     var
         MemberApp: Record "Member Application";
-        RejectionEmailStatusText: Text[250];
     begin
         if not MemberApp.Get(ApplicationID) then
             Error('Member Application %1 not found', ApplicationID);
@@ -195,159 +176,11 @@ codeunit 50100 "Member Management"
         // Update status and save the reason
         MemberApp.Status := Enum::"Member Application Status"::Rejected;
         MemberApp."Rejection Reason" := RejectionReason;
-        MemberApp."Approval Date" := Today;  // Records when the decision was made
+        MemberApp."Approval Date" := Today;  // Records when the decision was made (Date type)
         MemberApp.Modify();
 
-        SendRejectionEmailToApplicant(MemberApp, RejectionReason, RejectionEmailStatusText);
-
-        LogAuditEntry('Rejected', 'Member Application', ApplicationID,
-            StrSubstNo('Application %1 rejected. Reason: %2', ApplicationID, RejectionReason));
-
-        Message('Application %1 has been rejected.\%2', ApplicationID, RejectionEmailStatusText);
-    end;
-
-    // -------------------------------------------------------
-    // SendWelcomeEmailToMember
-    // -------------------------------------------------------
-    // PURPOSE: Sends a welcome/registration email to the member
-    //          after they are created from an approved application.
-    //
-    // HOW EMAIL WORKS IN BUSINESS CENTRAL:
-    //   1. Email Message builds the email content (recipient, subject, body)
-    //   2. Email.Send() tries to send it using the default configured account
-    //
-    // SETUP REQUIRED:
-    //   An admin must configure an Email Account in Business Central.
-    //   Search for "Email Accounts" and add SMTP, Microsoft 365,
-    //   or Current User depending on the environment.
-    //
-    // IMPORTANT DESIGN DECISION:
-    //   Email delivery is NON-BLOCKING. If setup is missing or sending fails,
-    //   the member remains created and the approver gets an informational
-    //   message explaining what to configure.
-    // -------------------------------------------------------
-    local procedure SendWelcomeEmailToMember(Member: Record "Member"; var WelcomeEmailStatusText: Text[250])
-    var
-        EmailMessage: Codeunit "Email Message";
-        SendFailureDetails: Text;
-    begin
-        if Member.Email = '' then begin
-            WelcomeEmailStatusText := StrSubstNo(
-                'Member %1 created. Email not sent because no email address is available for this member.',
-                Member."Member ID");
-            exit;
-        end;
-
-        EmailMessage.Create(
-            Member."Email",
-            'Welcome to the SACCO!',
-            StrSubstNo('Dear %1 %2, your membership has been approved. Welcome!', Member."First Name", Member."Last Name")
-        );
-        if TrySendEmail(EmailMessage, SendFailureDetails) then
-            WelcomeEmailStatusText := StrSubstNo('Member %1 created successfully. Welcome email sent.', Member."Member ID")
-        else
-            WelcomeEmailStatusText := StrSubstNo('Member %1 created successfully. Email not sent: %2', Member."Member ID", SendFailureDetails);
-    end;
-
-    // -------------------------------------------------------
-    // SendRejectionEmailToApplicant
-    // -------------------------------------------------------
-    // PURPOSE: Sends a rejection email to the applicant containing
-    //          the rejection reason and application reference.
-    // -------------------------------------------------------
-    local procedure SendRejectionEmailToApplicant(MemberApp: Record "Member Application"; RejectionReason: Text[250]; var RejectionEmailStatusText: Text[250])
-    var
-        EmailMessage: Codeunit "Email Message";
-        SendFailureDetails: Text;
-    begin
-        if MemberApp.Email = '' then begin
-            RejectionEmailStatusText := 'Rejection email not sent because the applicant has no email address.';
-            exit;
-        end;
-
-        EmailMessage.Create(
-            MemberApp."Email",
-            'Membership Application Rejected',
-            StrSubstNo('Dear %1 %2, your application was rejected. Reason: %3', MemberApp."First Name", MemberApp."Last Name", RejectionReason)
-        );
-        if TrySendEmail(EmailMessage, SendFailureDetails) then
-            RejectionEmailStatusText := 'Rejection email sent successfully.'
-        else
-            RejectionEmailStatusText := 'Rejection completed. Email not sent: ' + SendFailureDetails;
-    end;
-
-    // -------------------------------------------------------
-    // TrySendEmail / TrySendEmailInternal
-    // -------------------------------------------------------
-    // PURPOSE: Sends an email in a non-blocking way and returns detailed
-    //          error text when sending fails.
-    // -------------------------------------------------------
-    local procedure TrySendEmail(var EmailMessage: Codeunit "Email Message"; var SendFailureDetails: Text): Boolean
-    var
-        EmailAccount: Record "Email Account";
-    begin
-        if not HasEmailSendPermissions(SendFailureDetails) then
-            exit(false);
-
-        ClearLastError();
-        if TrySendEmailInternalDefaultScenario(EmailMessage) then
-            exit(true);
-
-        SendFailureDetails := GetLastErrorText();
-
-        // Fallback path: if default scenario is not mapped correctly,
-        // try sending through the first configured account directly.
-        if EmailAccount.FindFirst() then begin
-            ClearLastError();
-            if TrySendEmailInternalAccount(EmailMessage, EmailAccount."Account Id", EmailAccount.Connector) then
-                exit(true);
-
-            if GetLastErrorText() <> '' then
-                SendFailureDetails := GetLastErrorText();
-        end;
-
-        exit(false);
-    end;
-
-    local procedure HasEmailSendPermissions(var FailureText: Text): Boolean
-    var
-        [SecurityFiltering(SecurityFilter::Ignored)]
-        SentEmail: Record "Sent Email";
-        [SecurityFiltering(SecurityFilter::Ignored)]
-        EmailOutbox: Record "Email Outbox";
-        [SecurityFiltering(SecurityFilter::Ignored)]
-        EmailRelatedRecord: Record "Email Related Record";
-    begin
-        if not SentEmail.ReadPermission() or
-           not SentEmail.WritePermission() or
-           not EmailOutbox.ReadPermission() or
-           not EmailOutbox.WritePermission() or
-           not EmailRelatedRecord.ReadPermission() or
-           not EmailRelatedRecord.WritePermission()
-        then begin
-            FailureText := 'Email not sent: the current user lacks required permissions for Sent Email, Email Outbox, or Email Related Record. Assign an email-capable permission set and try again.';
-            exit(false);
-        end;
-
-        exit(true);
-    end;
-
-    [TryFunction]
-    local procedure TrySendEmailInternalDefaultScenario(var EmailMessage: Codeunit "Email Message")
-    var
-        Email: Codeunit Email;
-    begin
-        if not Email.Send(EmailMessage, Enum::"Email Scenario"::Default) then
-            Error('Email send returned false using Default scenario.');
-    end;
-
-    [TryFunction]
-    local procedure TrySendEmailInternalAccount(var EmailMessage: Codeunit "Email Message"; EmailAccountId: Guid; EmailConnector: Enum "Email Connector")
-    var
-        Email: Codeunit Email;
-    begin
-        if not Email.Send(EmailMessage, EmailAccountId, EmailConnector) then
-            Error('Email send returned false using a configured email account.');
+        Message('Application %1 has been rejected', ApplicationID);
+        SendRejectionEmailToMember(MemberApp);
     end;
 
     // -------------------------------------------------------
@@ -356,67 +189,141 @@ codeunit 50100 "Member Management"
     // PURPOSE: Creates a unique Member ID like "MEM-20260303-0001"
     //
     // HOW IT WORKS:
-    //   1. Finds the LAST existing Member ID (sorted alphabetically)
-    //   2. Extracts the numeric suffix after the last '-'
-    //   3. Increments that number by 1 for the new ID
-    //   This avoids duplicate IDs if records are ever deleted,
-    //   because we base the sequence on the highest existing ID
-    //   rather than on the record count.
+    //   1. Counts how many members exist already
+    //   2. Uses that count + 1 as the sequence number
+    //   3. Builds ID: MEM-YYYYMMDD-#### (date + padded number)
     //
     // KEY CONCEPT - "local procedure":
     //   "local" means only THIS codeunit can call this procedure.
     //   External code (pages, other codeunits) cannot use it.
+    //
+    // KEY CONCEPT - Format():
+    //   Format(Today, 0, '<Year4><Month,2><Day,2>') converts
+    //   today's date into text like "20260303"
+    //   Format(5, 0, '<Integer,4>') converts 5 into "0005" (padded)
+    //
+    // KEY CONCEPT - exit():
+    //   exit(value) returns a value from a procedure.
+    //   Similar to "return" in other programming languages.
     // -------------------------------------------------------
     local procedure GenerateMemberID(): Code[20]
     var
         Member: Record "Member";
-        NextSeqNo: Integer;
-        LastID: Code[20];
-        DashPos: Integer;
-        SeqText: Text;
+        MemberCount: Integer;
     begin
-        // Find the member with the highest Member ID (alphabetical sort)
-        Member.SetCurrentKey("Member ID");
-        if Member.FindLast() then begin
-            // Extract the numeric suffix after the last '-'
-            // e.g., from "MEM-20260303-0005" extract "0005"
-            LastID := Member."Member ID";
-            DashPos := StrLen(LastID);
-            while (DashPos > 0) and (LastID[DashPos] <> '-') do
-                DashPos -= 1;
-            if DashPos > 0 then begin
-                SeqText := CopyStr(Format(LastID), DashPos + 1);
-                if not Evaluate(NextSeqNo, SeqText) then
-                    NextSeqNo := 0;
-            end;
-            // Increment to get the next sequence number
-            NextSeqNo += 1;
-        end else
-            // No members exist yet — start at 1
-            NextSeqNo := 1;
+        // Sort by Registration Date to find the last member
+        Member.SetCurrentKey("Registration Date");
+
+        // Count existing members (or start at 1 if none exist)
+        if Member.FindLast() then
+            MemberCount := Member.Count + 1
+        else
+            MemberCount := 1;
 
         // Build and return the ID string
         // e.g., 'MEM-20260303-0001'
-        exit('MEM-' + Format(Today, 0, '<Year4><Month,2><Day,2>') + '-' + Format(NextSeqNo, 0, '<Integer,4>'));
+        exit('MEM-' + Format(Today, 0, '<Year4><Month,2><Day,2>') + '-' + Format(MemberCount, 0, '<Integer,4>'));
     end;
 
-    // -------------------------------------------------------
-    // LogAuditEntry (local helper)
-    // -------------------------------------------------------
-    // PURPOSE: Creates an audit log record for tracking actions
-    //          taken on member applications.
-    // -------------------------------------------------------
-    local procedure LogAuditEntry(ActionType: Text[50]; DocumentType: Text[50]; DocumentNo: Code[20]; Description: Text[250])
+    procedure SendWelcomeEmailToMember(Member: Record Member)
     var
-        AuditLog: Record "Application Audit Log";
+        EmailMessage: Codeunit "Email Message";
+        Email: Codeunit Email;
+        Subject: Text[100];
+        Body: Text;
     begin
-        AuditLog.Init();
-        AuditLog."Date-Time" := CurrentDateTime;
-        AuditLog."User ID" := CopyStr(UserId, 1, 50);
-        AuditLog."Action Type" := ActionType;
-        AuditLog."Document Type" := DocumentType;
-        AuditLog."Document No." := DocumentNo;
-        AuditLog.Description := Description;
-        AuditLog.Insert(true);
+        if (Member.Email = '') or (Member."Full Name" = '') then
+            exit;
+        Subject := 'Welcome to the SACCO - Regisration Confirmed';
+
+        Body += FindReplaceWelcomeEmailSetup(Body, Member);
+
+        EmailMessage.Create(Member."Email", Subject, Body, true);
+        if not Email.Send(EmailMessage) then
+            Message('Member created successfully, but the welcome email could not be sent. Please check Email Account setup (search "Email Accounts")');
+
+    end;
+
+    procedure SendRejectionEmailToMember(Member: Record "Member Application")
+    var
+        EmailMessage: Codeunit "Email Message";
+        Email: Codeunit Email;
+        Subject: Text[100];
+        Body: Text;
+    begin
+        if (Member.Email = '') or (Member."First Name" = '') then
+            exit;
+        Subject := 'Application not approved - Action required';
+
+        Body += FindReplaceRejectionEmailSetup(Body, Member);
+
+        EmailMessage.Create(Member."Email", Subject, Body, true);
+        if not Email.Send(EmailMessage) then
+            Message('Member created successfully, but the welcome email could not be sent. Please check Email Account setup (search "Email Accounts")');
+
+    end;
+
+    procedure FindReplaceWelcomeEmailSetup(EmailText: Text; Member: Record Member): Text
+    var
+        WelcomeEmailSetupRecord: Record WelcomeEmailSetupTable;
+        EmailBody: Text;
+    begin
+        if not WelcomeEmailSetupRecord.FindFirst() then
+            exit(EmailText);
+
+        EmailBody := WelcomeEmailSetupRecord.GetRichText();
+
+        EmailBody := EmailBody.Replace('{Member ID}', Member."Member ID");
+        EmailBody := EmailBody.Replace('{Application ID}', Member."Application ID");
+        EmailBody := EmailBody.Replace('{First Name}', Member."First Name");
+        EmailBody := EmailBody.Replace('{Last Name}', Member."Last Name");
+        EmailBody := EmailBody.Replace('{Full Name}', Member."Full Name");
+        EmailBody := EmailBody.Replace('{Email}', Member."Email");
+        EmailBody := EmailBody.Replace('{Phone Number}', Member."Phone Number");
+        EmailBody := EmailBody.Replace('{Date of Birth}', Format(Member."Date of Birth"));
+        EmailBody := EmailBody.Replace('{Address}', Member."Address");
+        EmailBody := EmailBody.Replace('{City}', Member."City");
+        EmailBody := EmailBody.Replace('{Postal Code}', Member."Postal Code");
+        EmailBody := EmailBody.Replace('{Country}', Member."Country");
+        EmailBody := EmailBody.Replace('{ID/Passport Number}', Member."ID Number");
+        EmailBody := EmailBody.Replace('{Registration Date}', Format(Member."Registration Date"));
+        EmailBody := EmailBody.Replace('{Member Status}', Format(Member."Status"));
+        EmailBody := EmailBody.Replace('{Occupation}', Member."Occupation");
+        EmailBody := EmailBody.Replace('{Annual Income}', Format(Member."Annual Income"));
+        EmailBody := EmailBody.Replace('{Member Category}', Member."Member Category");
+
+        exit(EmailBody);
+    end;
+
+    procedure FindReplaceRejectionEmailSetup(EmailText: Text; MemberRejected: Record "Member Application"): Text
+    var
+        RejectionEmailSetupRecord: Record RejectionEmailSetupTable;
+        EmailBody: Text;
+    begin
+        if not RejectionEmailSetupRecord.FindFirst() then
+            exit(EmailText);
+
+        EmailBody := RejectionEmailSetupRecord.GetRichText();
+
+        EmailBody := EmailBody.Replace('{Application ID}', MemberRejected."Application ID");
+        EmailBody := EmailBody.Replace('{First Name}', MemberRejected."First Name");
+        EmailBody := EmailBody.Replace('{Last Name}', MemberRejected."Last Name");
+        EmailBody := EmailBody.Replace('{Email}', MemberRejected."Email");
+        EmailBody := EmailBody.Replace('{Phone Number}', MemberRejected."Phone Number");
+        EmailBody := EmailBody.Replace('{Date of Birth}', Format(MemberRejected."Date of Birth"));
+        EmailBody := EmailBody.Replace('{Address}', MemberRejected."Address");
+        EmailBody := EmailBody.Replace('{City}', MemberRejected."City");
+        EmailBody := EmailBody.Replace('{Postal Code}', MemberRejected."Postal Code");
+        EmailBody := EmailBody.Replace('{Country}', MemberRejected."Country");
+        EmailBody := EmailBody.Replace('{ID Number}', MemberRejected."ID Number");
+        EmailBody := EmailBody.Replace('{Application Date}', Format(MemberRejected."Application Date"));
+        EmailBody := EmailBody.Replace('{Status}', Format(MemberRejected."Status"));
+        EmailBody := EmailBody.Replace('{Approval Date}', Format(MemberRejected."Approval Date"));
+        EmailBody := EmailBody.Replace('{Rejection Reason}', MemberRejected."Rejection Reason");
+        EmailBody := EmailBody.Replace('{Occupation}', MemberRejected."Occupation");
+        EmailBody := EmailBody.Replace('{Annual Income}', Format(MemberRejected."Annual Income"));
+        EmailBody := EmailBody.Replace('{Member Category}', MemberRejected."Member Category");
+
+        exit(EmailBody);
     end;
 }

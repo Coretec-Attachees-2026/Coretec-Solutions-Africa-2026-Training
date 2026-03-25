@@ -1,3 +1,4 @@
+
 // ============================================================
 // Table 50104 - Member Setup
 // ============================================================
@@ -59,7 +60,6 @@ table 50104 "Member Setup"
             TableRelation = "G/L Account"."No." where("Direct Posting" = const(true));
             // This is the CREDIT side (bank account - money going out)
         }
-
     }
 
     keys
