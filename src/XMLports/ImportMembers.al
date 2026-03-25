@@ -1,8 +1,4 @@
 xmlport 50124 "Import Members XMLport"
-// Member Category validation - existing(BUSINESS, DORMANT, GROUP, INSTITUTIONAL, REGULAR ,SENIOR, STUDENT)
-// Generate Member Application's "Application ID"
-// Link the above ID to PK "Member ID" on the member table
-// 
 {
     Caption = 'Import Members XMLport';
     Format = VariableText;
