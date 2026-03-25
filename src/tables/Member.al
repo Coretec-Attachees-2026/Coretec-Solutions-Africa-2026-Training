@@ -1,27 +1,3 @@
-// ============================================================
-// Table 50101 - Member
-// ============================================================
-// PURPOSE: Stores active SACCO members (people who have been approved).
-//
-// HOW MEMBERS ARE CREATED:
-//   Members are NOT created directly on this table.
-//   Instead, the process is:
-//     1. Person fills out a Member Application (Table 50100)
-//     2. Admin approves the application 
-//     3. Codeunit 50100 (Member Management) copies the data here
-//
-// This table is linked to Member Application via "Application ID".
-//
-// KEY CONCEPT - "TableRelation":
-//   field "Application ID" has TableRelation = "Member Application"
-//   This creates a link between the member and their original application.
-//   It's like a foreign key in a database.
-//
-// KEY CONCEPT - "Editable = false":
-//   Fields like Full Name, Registration Date, and Account Balance
-//   cannot be typed in by the user. They are set by code.
-// ============================================================
-
 table 50101 "Member"
 {
     Caption = 'Member';
@@ -132,7 +108,7 @@ table 50101 "Member"
             // New members start as "Active"
         }
         // ---------- EMPLOYMENT ----------
-        field(16; "Occupation"; Text[100])
+        field(16; "Occupation"; Text[30])
         {
             Caption = 'Occupation';
             TableRelation = Occupation.Name;

@@ -142,9 +142,10 @@ table 50100 "Member Application"
         {
             Caption = 'Rejection Reason';
         }
-        field(16; "Occupation"; Text[100])
+        field(16; "Occupation"; Text[30])
         {
             Caption = 'Occupation';
+            TableRelation = Occupation.Name;
         }
         field(17; "Annual Income"; Decimal)
         {
