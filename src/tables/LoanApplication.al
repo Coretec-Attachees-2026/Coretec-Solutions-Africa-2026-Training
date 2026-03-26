@@ -1,25 +1,3 @@
-// ============================================================
-// Table 50103 - Loan Application
-// ============================================================
-// PURPOSE: Stores every loan request made by a SACCO member.
-//
-// HOW IT WORKS:
-// 1. When a new record is inserted, it auto-generates an ID like "LN-20260303-00001"
-// 2. When you pick a Member ID, it automatically fills in the member's name
-// 3. When you enter Amount, Term, or Interest Rate, it recalculates Monthly & Total Payment
-// 4. The Status field tracks where the loan is in the workflow
-//
-// KEY CONCEPT - "TableRelation":
-//   field "Member ID" has TableRelation = "Member"."Member ID"
-//   This means you can ONLY enter a Member ID that already exists in the Member table.
-//   It's like a foreign key in a database.
-//
-// KEY CONCEPT - "FlowField" (field 11 "Member Name"):
-//   A FlowField does NOT store data. It calculates its value on-the-fly
-//   by looking up data from another table. Here it grabs the Full Name
-//   from the Member table matching our Member ID.
-// ============================================================
-
 table 50103 "Loan Application"
 {
     Caption = 'Loan Application';
@@ -27,27 +5,21 @@ table 50103 "Loan Application"
 
     fields
     {
-        // ---------- IDENTIFICATION ----------
         field(1; "Loan Application No."; Code[20])
         {
             Caption = 'Loan Application No.';
             Editable = false;
-            // This is the primary key - auto-generated in OnInsert trigger
         }
 
-        // ---------- MEMBER INFORMATION ----------
         field(2; "Member ID"; Code[20])
         {
             Caption = 'Member ID';
-            // TableRelation links this field to the Member table
-            // so you can only pick valid, existing members
-            TableRelation = "Member"."Member ID";
+            TableRelation = "Member";
 
             trigger OnValidate()
             var
                 Member: Record "Member";
             begin
-                // When user picks a Member ID, look up their name automatically
                 if Member.Get("Member ID") then
                     "Member Name" := Member."Full Name"
                 else

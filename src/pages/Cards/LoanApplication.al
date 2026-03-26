@@ -1,28 +1,3 @@
-// ============================================================
-// Page 50108 - Loan Application Card
-// ============================================================
-// PURPOSE: The main form where users view and edit ONE loan application.
-//
-// KEY CONCEPT - "PageType = Card":
-//   A Card page displays a single record (like a detailed form).
-//   Compare this to a List page which shows many records in a grid.
-//
-// KEY CONCEPT - "SourceTable":
-//   This tells BC which table's data to show on this page.
-//   The special variable "Rec" automatically refers to the current record.
-//
-// KEY CONCEPT - "Actions":
-//   Actions are buttons that appear in the ribbon/toolbar.
-//   Each action calls a procedure in our Loan Management codeunit.
-//   We use "Enabled" property to show/hide buttons based on status.
-//
-// WORKFLOW ON THIS PAGE (simplified - just 3 steps!):
-//   1. User creates new loan → fills in Member ID, Amount, Term, Rate, Purpose
-//   2. Clicks "Submit for Approval" → status changes to Pending Approval
-//   3. Loan officer clicks "Approve" (automatically posts to G/L!) or "Reject"
-//   That's it! No separate "Post" step needed.
-// ============================================================
-
 page 50108 "Loan Application Card"
 {
     Caption = 'Loan Application Card';
@@ -34,43 +9,6 @@ page 50108 "Loan Application Card"
     {
         area(Content)
         {
-            // ---- GENERAL INFO GROUP ----
-            // Shows the loan number, status, and dates
-            group(General)
-            {
-                Caption = 'General';
-
-                field("Loan Application No."; Rec."Loan Application No.")
-                {
-                    ToolTip = 'Auto-generated loan application number.';
-                    // Editable = false is set on the table field
-                }
-                field(Status; Rec.Status)
-                {
-                    ToolTip = 'Current status of the loan application.';
-                    // Shows a colored indicator based on status
-                    StyleExpr = StatusStyle;
-                }
-                field("Application Date"; Rec."Application Date")
-                {
-                    ToolTip = 'Date when this loan application was created.';
-                }
-                field("Approval Date"; Rec."Approval Date")
-                {
-                    ToolTip = 'Date when this loan was approved.';
-                }
-                field("Disbursement Date"; Rec."Disbursement Date")
-                {
-                    ToolTip = 'Date when the loan was posted/disbursed.';
-                }
-                field(Posted; Rec.Posted)
-                {
-                    ToolTip = 'Indicates whether this loan has been posted to the General Ledger.';
-                }
-            }
-
-            // ---- MEMBER INFO GROUP ----
-            // Who is applying for the loan?
             group("Member Information")
             {
                 Caption = 'Member Information';
@@ -78,17 +16,12 @@ page 50108 "Loan Application Card"
                 field("Member ID"; Rec."Member ID")
                 {
                     ToolTip = 'Select the member applying for the loan. Only active members appear.';
-                    // When user picks a member, the OnValidate trigger
-                    // on the table automatically fills in Member Name
                 }
                 field("Member Name"; Rec."Member Name")
                 {
                     ToolTip = 'Name of the member (filled automatically).';
                 }
             }
-
-            // ---- LOAN DETAILS GROUP ----
-            // The core loan information
             group("Loan Details")
             {
                 Caption = 'Loan Details';
@@ -112,9 +45,38 @@ page 50108 "Loan Application Card"
                     // MultiLine = true shows a bigger text box
                 }
             }
+            
+            group(General)
+            {
+                Caption = 'General';
 
-            // ---- CALCULATED FIELDS GROUP ----
-            // These are calculated automatically when you enter Amount, Rate, and Term
+                field("Loan Application No."; Rec."Loan Application No.")
+                {
+                    ToolTip = 'Auto-generated loan application number.';
+                }
+                field(Status; Rec.Status)
+                {
+                    ToolTip = 'Current status of the loan application.';
+                    StyleExpr = StatusStyle;
+                }
+                field("Application Date"; Rec."Application Date")
+                {
+                    ToolTip = 'Date when this loan application was created.';
+                }
+                field("Approval Date"; Rec."Approval Date")
+                {
+                    ToolTip = 'Date when this loan was approved.';
+                }
+                field("Disbursement Date"; Rec."Disbursement Date")
+                {
+                    ToolTip = 'Date when the loan was posted/disbursed.';
+                }
+                field(Posted; Rec.Posted)
+                {
+                    ToolTip = 'Indicates whether this loan has been posted to the General Ledger.';
+                }
+            }
+
             group("Payment Summary")
             {
                 Caption = 'Payment Summary (Calculated Automatically)';
@@ -133,12 +95,10 @@ page 50108 "Loan Application Card"
                 }
             }
 
-            // ---- REJECTION INFO (only visible if rejected) ----
             group("Rejection Information")
             {
                 Caption = 'Rejection Information';
                 Visible = (Rec.Status = Enum::"Loan Application Status"::Rejected);
-                // This group only shows when the loan is rejected
 
                 field("Rejection Reason"; Rec."Rejection Reason")
                 {
@@ -147,7 +107,6 @@ page 50108 "Loan Application Card"
                 }
             }
 
-            // ---- POSTING INFO (only visible if posted) ----
             group("Posting Information")
             {
                 Caption = 'Posting Information';
@@ -161,26 +120,15 @@ page 50108 "Loan Application Card"
         }
     }
 
-    // ============================================
-    // ACTIONS (Buttons in the toolbar/ribbon)
-    // ============================================
-    // These are the buttons that drive the workflow.
-    // Each button:
-    //   - Has an "Enabled" condition (when can you click it?)
-    //   - Calls a procedure in the Loan Management codeunit
-    //   - Uses CurrPage.Update(false) to refresh the page after
-    // ============================================
     actions
     {
         area(Processing)
         {
-            // ---- STEP 1: Submit for Approval ----
             action(SubmitForApproval)
             {
                 Caption = 'Submit for Approval';
                 ToolTip = 'Submit this loan application for review by a loan officer.';
                 Image = SendApprovalRequest;
-                // Only enabled when loan is "Open"
                 Enabled = (Rec.Status = Enum::"Loan Application Status"::Open);
 
                 trigger OnAction()
@@ -189,12 +137,9 @@ page 50108 "Loan Application Card"
                 begin
                     LoanMgt.SubmitForApproval(Rec);
                     CurrPage.Update(false);
-                    // CurrPage.Update(false) refreshes the page to show the new status
-                    // The "false" means don't re-trigger any validation
                 end;
             }
 
-            // ---- STEP 2a: Approve & Disburse (automatic!) ----
             action(Approve)
             {
                 Caption = 'Approve & Disburse';
@@ -206,19 +151,13 @@ page 50108 "Loan Application Card"
                 var
                     LoanMgt: Codeunit "Loan Management";
                 begin
-                    // Confirm() shows a Yes/No dialog - returns true if user clicks Yes
-                    // We warn the user that this will ALSO post to G/L
                     if not Confirm('Are you sure you want to approve AND disburse loan %1?\\Amount: %2\\This will post to the General Ledger and cannot be undone.',
                         false, Rec."Loan Application No.", Rec."Loan Amount") then
                         exit;
-
-                    // ApproveLoan() now automatically calls PostLoan() inside it
                     LoanMgt.ApproveLoan(Rec);
                     CurrPage.Update(false);
                 end;
             }
-
-            // ---- STEP 2b: Reject ----
             action(Reject)
             {
                 Caption = 'Reject';
@@ -231,11 +170,8 @@ page 50108 "Loan Application Card"
                     LoanMgt: Codeunit "Loan Management";
                     RejectionReason: Text[250];
                 begin
-                    // Ask the loan officer to type a reason for rejection
-                    // This is a simple input dialog
                     RejectionReason := '';
                     if RejectionReason = '' then begin
-                        // Use a page to get input - for simplicity we use a hardcoded prompt
                         if not Confirm('Are you sure you want to reject loan %1?',
                             false, Rec."Loan Application No.") then
                             exit;
@@ -246,14 +182,9 @@ page 50108 "Loan Application Card"
                     CurrPage.Update(false);
                 end;
             }
-
-            // NOTE: The "Post Loan" button has been REMOVED.
-            // Disbursement now happens automatically when you click "Approve & Disburse".
-            // This simplifies the workflow from 4 steps to 3 steps:
-            //   Open → Submit → Approve & Disburse (done!)
         }
 
-        // ---- NAVIGATION: Link to related pages ----
+
         area(Navigation)
         {
             action(LoanLedgerEntries)
@@ -263,14 +194,11 @@ page 50108 "Loan Application Card"
                 Image = LedgerEntries;
                 RunObject = page "Loan Ledger Entries";
                 RunPageLink = "Loan Application No." = field("Loan Application No.");
-                // RunPageLink filters the target page to only show entries for THIS loan
             }
         }
 
         area(Promoted)
         {
-            // "Promoted" actions appear as big buttons at the top of the page
-            // making them easy to find
             group(Category_Process)
             {
                 Caption = 'Process';
@@ -285,17 +213,6 @@ page 50108 "Loan Application Card"
             }
         }
     }
-
-    // ============================================
-    // STATUS STYLING
-    // ============================================
-    // This makes the Status field change color based on its value:
-    //   Open             = Standard (normal)
-    //   Pending Approval = Attention (yellow)
-    //   Approved         = Favorable (green)
-    //   Rejected         = Unfavorable (red)
-    //   Disbursed        = Favorable (green)
-    // ============================================
     var
         StatusStyle: Text;
 

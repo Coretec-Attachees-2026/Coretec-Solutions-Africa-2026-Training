@@ -55,32 +55,11 @@ page 50100 "Member Application List"
             action("New Application")
             {
                 Caption = 'New Application';
-                Image = New; 
+                Image = Add; 
                 Promoted = true;                         
-                PromotedCategory = New;
+                PromotedCategory = Process;
                 RunObject = page "Member Application Card";
                 RunPageMode = Create;
-            }
-            action("Member Setup")
-            {
-                Caption = 'Member Setup';
-                Image = Setup;
-                Promoted = true;
-                PromotedCategory = Process;
-
-                trigger OnAction()
-                begin
-                    Page.Run(Page::"Member Setup");
-                end;
-            }
-            action("View Details")
-            {
-                Caption = 'View Details';
-                RunObject = page "Member Application Card";
-                RunPageLink = "Application ID" = field("Application ID");
-                Image = Open;
-                Promoted = true;
-                PromotedCategory = Process;
             }
             action("Approve Application")
             {
@@ -140,6 +119,27 @@ page 50100 "Member Application List"
                 begin
                     Xmlport.Run(Xmlport::"Import Members XMLport", true, true);
                 end;
+            }
+            action("Member Setup")
+            {
+                Caption = 'Member Setup';
+                Image = Setup;
+                Promoted = true;
+                PromotedCategory = Process;
+
+                trigger OnAction()
+                begin
+                    Page.Run(Page::"Member Setup");
+                end;
+            }
+            action("View Details")
+            {
+                Caption = 'View Details';
+                RunObject = page "Member Application Card";
+                RunPageLink = "Application ID" = field("Application ID");
+                Image = Open;
+                Promoted = true;
+                PromotedCategory = Process;
             }
         }
     }
