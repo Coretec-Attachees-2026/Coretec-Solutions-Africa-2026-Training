@@ -113,8 +113,8 @@ codeunit 50100 "Member Management"
     // -------------------------------------------------------
     // ApproveApplication
     // -------------------------------------------------------
-    // PURPOSE: Approves a pending application and automatically
-    //          creates the member record.
+    // PURPOSE: Approves a pending application, creates the member
+    //          record, and sends an SMS notification to the member.
     //
     // WHAT HAPPENS:
     //   1. Finds the application by ID
@@ -122,7 +122,8 @@ codeunit 50100 "Member Management"
     //   3. Changes status to "Approved"
     //   4. Records the approval date
     //   5. Calls TransferApplicationToMember() to create the member
-    //   6. Shows a success message
+    //   6. Sends an SMS to the member's phone number ← NEW
+    //   7. Shows a success message
     //
     // KEY CONCEPT - ".Modify()":
     //   Saves changes to an EXISTING record in the database.
@@ -135,6 +136,10 @@ codeunit 50100 "Member Management"
     procedure ApproveApplication(ApplicationID: Code[20])
     var
         MemberApp: Record "Member Application";
+        SMSHelper: Codeunit "AT SMS Helper";    // ← NEW: SMS codeunit
+        FullName: Text;                         // ← NEW: Member's full name for SMS
+        PhoneNumber: Text;                      // ← NEW: Member's phone number
+        SMSMessage: Text;                       // ← NEW: The SMS text to send
     begin
         // Find the application
         if not MemberApp.Get(ApplicationID) then
@@ -150,8 +155,22 @@ codeunit 50100 "Member Management"
         MemberApp.Modify();  // Save the changes
 
         // Create the member from the approved application
-        if TransferApplicationToMember(ApplicationID) then
+        if TransferApplicationToMember(ApplicationID) then begin
             Message('Application %1 approved and member created successfully', ApplicationID);
+
+            // ── SEND SMS NOTIFICATION ─────────────────────────────────
+            // Build the member's full name and phone from the application record
+            FullName := MemberApp."First Name" + ' ' + MemberApp."Last Name";
+            PhoneNumber := MemberApp."Phone Number";
+            SMSMessage := 'Dear ' + FullName + ', your SACCO membership application has been approved. ' +
+                           'Welcome! Please visit our offices for the next steps.';
+
+            // Send the SMS — if it fails we show a warning but do NOT block the approval
+            if not SMSHelper.SendSMS(PhoneNumber, SMSMessage) then
+                Message('Application approved successfully, but the SMS notification could not be sent. ' +
+                        'Please notify %1 manually on %2.', FullName, PhoneNumber);
+            // ─────────────────────────────────────────────────────────
+        end;
     end;
 
     // -------------------------------------------------------

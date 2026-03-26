@@ -13,3 +13,9 @@
 
 # VS Code local debug/launch config (machine-specific)
 .vscode/launch.json
+# SMSserver - Secret keys
+SMSserver/.env
+
+# SMSserver - Python cache
+SMSserver/__pycache__/
+SMSserver/*.pyc
