@@ -159,14 +159,14 @@ codeunit 50100 "Member Management"
             Message('Application %1 approved and member created successfully', ApplicationID);
 
             // ── SEND SMS NOTIFICATION ─────────────────────────────────
-            // Build the member's full name and phone from the application record
             FullName := MemberApp."First Name" + ' ' + MemberApp."Last Name";
             PhoneNumber := MemberApp."Phone Number";
             SMSMessage := 'Dear ' + FullName + ', your SACCO membership application has been approved. ' +
                            'Welcome! Please visit our offices for the next steps.';
 
-            // Send the SMS — if it fails we show a warning but do NOT block the approval
-            if not SMSHelper.SendSMS(PhoneNumber, SMSMessage) then
+            // SendSMS now takes 5 parameters:
+            // Phone, Message, ApplicationID, MemberName, TriggeredBy
+            if not SMSHelper.SendSMS(PhoneNumber, SMSMessage, MemberApp."Application ID", FullName, 'Application Approved') then
                 Message('Application approved successfully, but the SMS notification could not be sent. ' +
                         'Please notify %1 manually on %2.', FullName, PhoneNumber);
             // ─────────────────────────────────────────────────────────
