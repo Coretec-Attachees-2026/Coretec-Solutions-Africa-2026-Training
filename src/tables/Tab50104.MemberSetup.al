@@ -77,6 +77,27 @@ table 50104 "Member Setup"
             // Your application {Application ID} has been rejected.
             // Reason: {Rejection Reason}
         }
+
+        // ===== SMS INTEGRATION - AFRICA'S TALKING =====
+        field(20; "AfricasTalking API Key"; Text[250])
+        {
+            Caption = 'Africa''s Talking API Key';
+            ExtendedDatatype = Masked;
+        }
+        field(21; "AfricasTalking Username"; Text[100])
+        {
+            Caption = 'Africa''s Talking Username';
+        }
+        field(22; "Send SMS on Approval"; Boolean)
+        {
+            Caption = 'Send SMS on Approval';
+            InitValue = true;
+        }
+        field(23; "Send SMS on Rejection"; Boolean)
+        {
+            Caption = 'Send SMS on Rejection';
+            InitValue = true;
+        }
     }
 
     keys

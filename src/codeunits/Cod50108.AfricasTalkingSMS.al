@@ -62,7 +62,6 @@ codeunit 50108 "Africa's Talking SMS"
     var
         HttpClient: HttpClient;
         HttpContent: HttpContent;
-        HttpHeaders: HttpHeaders;
         HttpResponseMessage: HttpResponseMessage;
         RequestPayload: Text;
         ResponseText: Text;
@@ -83,8 +82,6 @@ codeunit 50108 "Africa's Talking SMS"
 
         // Create HTTP content
         HttpContent.WriteFrom(RequestPayload);
-        HttpContent.GetHeaders(HttpHeaders);
-        HttpHeaders.Add('Content-Type', 'application/json');
 
         // Set the service URL (default to localhost:5000)
         ServiceURL := 'http://localhost:5000/send-sms';
