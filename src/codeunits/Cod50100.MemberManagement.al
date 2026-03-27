@@ -149,10 +149,12 @@ codeunit 50100 "Member Management"
 
         // Create the member from the approved application
         if TransferApplicationToMember(ApplicationID) then begin
-            // Get the newly created member to send welcome email
+            // Get the newly created member to send welcome email and SMS
             NewMember.SetRange("Application ID", ApplicationID);
-            if NewMember.FindFirst() then
+            if NewMember.FindFirst() then begin
                 SendWelcomeEmailToMember(NewMember);
+                SendApprovalSMS(NewMember);
+            end;
             Message('Application %1 approved and member created successfully', ApplicationID);
         end;
     end;
@@ -400,4 +402,25 @@ codeunit 50100 "Member Management"
         Result := Result.Replace('{Rejection Reason}', RejectionReason);
         exit(Result);
     end;
+
+    // -------------------------------------------------------
+    // SendApprovalSMS
+    // -------------------------------------------------------
+    // PURPOSE: Sends an approval SMS to the newly created member
+    //          when their application is approved.
+    //
+    // PARAMETERS:
+    //   Member: Record "Member" - The newly created member
+    //
+    // -------------------------------------------------------
+    local procedure SendApprovalSMS(Member: Record "Member")
+    var
+        AfricasTalkingSMS: Codeunit "Africa's Talking SMS";
+    begin
+        // Call the SMS codeunit to send approval notification
+        // Only send if member has a phone number
+        if Member."Phone Number" <> '' then
+            AfricasTalkingSMS.SendApprovalSMS(Member."Phone Number", Member."Full Name", Member."Member ID");
+    end;
 }
+
