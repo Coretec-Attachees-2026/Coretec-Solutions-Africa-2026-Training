@@ -119,7 +119,7 @@ codeunit 50100 "Member Management"
     end;
 
     // -------------------------------------------------------
-    // RejectApplication
+    // RejectApplication - 
     // -------------------------------------------------------
     procedure RejectApplication(ApplicationID: Code[20]; RejectionReason: Text[250])
     var
