@@ -1,0 +1,233 @@
+{
+  "info": {
+    "name": "Coretec Membership API (HTTPS)",
+    "description": "HTTPS collection for Business Central companies endpoint, members endpoint, and filtered active members endpoint.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "13f75d46-7ec5-42f0-8ad3-46a1830d9f98"
+  },
+  "auth": {
+    "type": "basic",
+    "basic": [
+      {
+        "key": "username",
+        "value": "{{username}}",
+        "type": "string"
+      },
+      {
+        "key": "password",
+        "value": "{{password}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const envName = pm.environment && pm.environment.name ? pm.environment.name : '';",
+          "if (!envName) {",
+          "  throw new Error('No Postman environment selected. Select an environment before sending requests.');",
+          "}",
+          "",
+          "const requiredVars = ['baseUrl', 'username', 'password'];",
+          "const missingRequired = requiredVars.filter(function (key) {",
+          "  const value = pm.environment.get(key);",
+          "  return !value || String(value).trim() === '';",
+          "});",
+          "",
+          "if (missingRequired.length > 0) {",
+          "  throw new Error('Missing required environment variable(s): ' + missingRequired.join(', '));",
+          "}",
+          "",
+          "const baseUrl = String(pm.environment.get('baseUrl')).trim();",
+          "if (!/^https:\\/\\//i.test(baseUrl)) {",
+          "  throw new Error('baseUrl must start with https:// for this HTTPS collection. Current value: ' + baseUrl);",
+          "}",
+          "",
+          "const requestName = pm.info && pm.info.requestName ? pm.info.requestName : '';",
+          "if (requestName !== 'Get Companies (HTTPS)') {",
+          "  const companyId = pm.environment.get('companyId');",
+          "  if (!companyId || String(companyId).trim() === '') {",
+          "    throw new Error('companyId is empty. Run Get Companies (HTTPS) first or set companyId manually in the environment.');",
+          "  }",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Get Companies (HTTPS)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v2.0/companies",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v2.0",
+            "companies"
+          ]
+        },
+        "description": "Gets available companies and stores the first company id into environment companyId variable."
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response contains companies array', function () {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body).to.have.property('value');",
+              "  pm.expect(body.value).to.be.an('array');",
+              "});",
+              "",
+              "pm.test('Store first company id automatically when available', function () {",
+              "  const body = pm.response.json();",
+              "  if (Array.isArray(body.value) && body.value.length > 0 && body.value[0].id) {",
+              "    pm.environment.set('companyId', body.value[0].id);",
+              "  }",
+              "  const companyId = pm.environment.get('companyId');",
+              "  pm.expect(companyId).to.be.a('string').and.not.empty;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Members (All)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/coretec/membership/v1.0/companies({{companyId}})/members?$top=20",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "coretec",
+            "membership",
+            "v1.0",
+            "companies({{companyId}})",
+            "members"
+          ],
+          "query": [
+            {
+              "key": "$top",
+              "value": "20"
+            }
+          ]
+        },
+        "description": "Returns members without filtering."
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response contains members array', function () {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body).to.have.property('value');",
+              "  pm.expect(body.value).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Active Members Only",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/coretec/membership/v1.0/companies({{companyId}})/members?$filter=status eq 'Active'&$top=20",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "coretec",
+            "membership",
+            "v1.0",
+            "companies({{companyId}})",
+            "members"
+          ],
+          "query": [
+            {
+              "key": "$filter",
+              "value": "status eq 'Active'"
+            },
+            {
+              "key": "$top",
+              "value": "20"
+            }
+          ]
+        },
+        "description": "Returns only members whose status is Active."
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response contains members array', function () {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body).to.have.property('value');",
+              "  pm.expect(body.value).to.be.an('array');",
+              "});",
+              "",
+              "pm.test('All returned members are Active', function () {",
+              "  const body = pm.response.json();",
+              "  body.value.forEach(function (member) {",
+              "    pm.expect(member).to.have.property('status');",
+              "    pm.expect(String(member.status)).to.equal('Active');",
+              "  });",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

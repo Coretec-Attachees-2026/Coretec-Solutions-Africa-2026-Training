@@ -119,7 +119,7 @@ codeunit 50100 "Member Management"
     end;
 
     // -------------------------------------------------------
-    // RejectApplication - 
+    // RejectApplication -  
     // -------------------------------------------------------
     procedure RejectApplication(ApplicationID: Code[20]; RejectionReason: Text[250])
     var
@@ -143,7 +143,7 @@ codeunit 50100 "Member Management"
     end;
 
     // -------------------------------------------------------
-    // SendWelcomeEmailToMember — uses the rich-text email template
+    // SendWelcomeEmailToMember — uses the rich-text email template////
     // -------------------------------------------------------
     procedure SendWelcomeEmailToMember(Member: Record Member)
     var

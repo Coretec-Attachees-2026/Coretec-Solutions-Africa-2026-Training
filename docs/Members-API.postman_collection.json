@@ -1,0 +1,160 @@
+{
+  "info": {
+    "name": "Coretec Membership API",
+    "description": "Collection for testing Business Central companies endpoint and custom Members API endpoint.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "7f2d75cf-31a2-4d5e-9269-e31f7f22d5e2"
+  },
+  "auth": {
+    "type": "basic",
+    "basic": [
+      {
+        "key": "username",
+        "value": "{{username}}",
+        "type": "string"
+      },
+      {
+        "key": "password",
+        "value": "{{password}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:7048/BC260"
+    },
+    {
+      "key": "companyId",
+      "value": ""
+    },
+    {
+      "key": "username",
+      "value": "WILLSPHINXOMEN\\WKWAB"
+    },
+    {
+      "key": "password",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Get Companies",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v2.0/companies",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v2.0",
+            "companies"
+          ]
+        },
+        "description": "Get companies and copy one company id into the companyId collection variable."
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response contains companies array', function () {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body).to.have.property('value');",
+              "  pm.expect(body.value).to.be.an('array');",
+              "});",
+              "",
+              "pm.test('Store first company id automatically when available', function () {",
+              "  const body = pm.response.json();",
+              "  if (Array.isArray(body.value) && body.value.length > 0 && body.value[0].id) {",
+              "    pm.collectionVariables.set('companyId', body.value[0].id);",
+              "  }",
+              "  pm.expect(pm.collectionVariables.get('companyId')).to.be.a('string');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Members",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/coretec/membership/v1.0/companies({{companyId}})/members?$top=20",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "coretec",
+            "membership",
+            "v1.0",
+            "companies({{companyId}})",
+            "members"
+          ],
+          "query": [
+            {
+              "key": "$top",
+              "value": "20"
+            }
+          ]
+        },
+        "description": "Call the custom Members API. Ensure companyId variable has a valid GUID value first."
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response contains members array', function () {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body).to.have.property('value');",
+              "  pm.expect(body.value).to.be.an('array');",
+              "});",
+              "",
+              "pm.test('First member has expected keys when data exists', function () {",
+              "  const body = pm.response.json();",
+              "  if (Array.isArray(body.value) && body.value.length > 0) {",
+              "    pm.expect(body.value[0]).to.have.property('id');",
+              "    pm.expect(body.value[0]).to.have.property('memberId');",
+              "    pm.expect(body.value[0]).to.have.property('fullName');",
+              "    pm.expect(body.value[0]).to.have.property('status');",
+              "  } else {",
+              "    pm.expect(body.value.length).to.equal(0);",
+              "  }",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
