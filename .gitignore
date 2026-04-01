@@ -13,9 +13,32 @@
 
 # VS Code local debug/launch config (machine-specific)
 .vscode/launch.json
-# SMSserver - Secret keys
+# SMSserver - Secret keys and environment files
 SMSserver/.env
+SMSserver/.env.local
 
-# SMSserver - Python cache
+# SMSserver - Python cache and virtual environments
 SMSserver/__pycache__/
 SMSserver/*.pyc
+SMSserver/venv/
+SMSserver/.venv/
+SMSserver/env/
+
+# Python build artifacts
+dist/
+build/
+*.egg-info/
+
+# AL build output folders
+bin/
+obj/
+
+# Visual Studio cache
+.vs/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Node modules (if used)
+node_modules/

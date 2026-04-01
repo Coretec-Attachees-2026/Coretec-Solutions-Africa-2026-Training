@@ -47,6 +47,7 @@ def send_sms():
         },
         verify=False
     )
+    print(f"Response is {response}")
 
     print(f"AT Response [{response.status_code}]: {response.text}")
 
