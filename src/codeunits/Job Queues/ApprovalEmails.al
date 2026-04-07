@@ -1,4 +1,4 @@
-codeunit 50106 "Approve Email"
+codeunit 50102 "Approve Email"
 // this is the actual codeunit that will run the email
 {
     TableNo = "Job Queue Entry";
@@ -13,7 +13,7 @@ codeunit 50106 "Approve Email"
             EmailMessenger.SendWelcomeEmailToMember(Member);
         end;
     end;
-    
+
     var
         myInt: Integer;
 }

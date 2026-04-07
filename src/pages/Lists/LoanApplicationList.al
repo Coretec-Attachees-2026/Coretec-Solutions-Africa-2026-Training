@@ -1,5 +1,5 @@
 // ============================================================
-// Page 50107 - Loan Application List
+// Page 50112 - Loan Application List
 // ============================================================
 // PURPOSE: Shows ALL loan applications in a grid/list format.
 //
@@ -20,7 +20,7 @@
 //   You must open the Card page to edit.
 // ============================================================
 
-page 50107 "Loan Application List"
+page 50112 "Loan Application List"
 {
     Caption = 'Loan Applications';
     PageType = List;

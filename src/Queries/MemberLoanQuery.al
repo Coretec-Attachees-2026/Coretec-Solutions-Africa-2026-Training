@@ -1,4 +1,4 @@
-query 50130 "Member Loan Query"
+query 50101 "Member Loan Query"
 // uses sql join types, queries translate directly to SQL
 // Queries with one statements for all records
 {

@@ -1,5 +1,5 @@
 // ============================================================
-// Codeunit 50104 - Loan No. Series Mgt
+// Codeunit 50101 - Loan No. Series Mgt
 // ============================================================
 // PURPOSE: Automatically creates the No. Series for Loan Applications.
 //
@@ -16,7 +16,7 @@
 // This runs automatically when the extension is installed (see Cod50103).
 // ============================================================
 
-codeunit 50104 "Loan No. Series Mgt"
+codeunit 50101 "Loan No. Series Mgt"
 {
     // Permissions tell BC which tables this codeunit needs to read/write
     Permissions = tabledata "No. Series" = rimd,        // r=read, i=insert, m=modify, d=delete

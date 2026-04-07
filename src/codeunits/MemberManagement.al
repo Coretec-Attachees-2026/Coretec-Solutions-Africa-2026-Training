@@ -1,4 +1,4 @@
-codeunit 50100 "Member Management"
+codeunit 50104 "Member Management"
 {
     procedure TransferApplicationToMember(ApplicationID: Code[20]): Boolean
     var
@@ -137,8 +137,9 @@ codeunit 50100 "Member Management"
         EmailMessage.Create(Member."Email", Subject, Body, true);
         if not Email.Send(EmailMessage) then
             Message('Member created successfully, but the welcome email could not be sent. Please check Email Account setup (search "Email Accounts")');
-        
+
     end;
+
     procedure SendRejectionEmailToMember(Member: Record "Member Application")
     var
         EmailMessage: Codeunit "Email Message";
@@ -155,7 +156,7 @@ codeunit 50100 "Member Management"
         EmailMessage.Create(Member."Email", Subject, Body, true);
         if not Email.Send(EmailMessage) then
             Message('Member created successfully, but the welcome email could not be sent. Please check Email Account setup (search "Email Accounts")');
-        
+
     end;
 
     procedure FindReplaceWelcomeEmailSetup(EmailText: Text; Member: Record Member): Text

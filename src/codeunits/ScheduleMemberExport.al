@@ -1,4 +1,4 @@
-codeunit 50144 "Member Scheduled Export"
+codeunit 50106 "Member Scheduled Export"
 {
     trigger OnRun()
     var
@@ -23,5 +23,5 @@ codeunit 50144 "Member Scheduled Export"
         DownloadFromStream(InStream, DialogueText, '', 'All Files (*.*)|*.*', FileName);
         // InStream.read() is called by downloadfromstream 
     end;
-    
+
 }

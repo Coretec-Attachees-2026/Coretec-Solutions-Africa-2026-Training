@@ -1,4 +1,4 @@
-xmlport 50124 "Import Members XMLport"
+xmlport 50101 "Import Members XMLport"
 {
     Caption = 'Import Members XMLport';
     Format = VariableText;
@@ -8,7 +8,7 @@ xmlport 50124 "Import Members XMLport"
     schema
     {
         textelement(RootNodeName)
-        {   
+        {
 
             tableelement(Member; "Member Application")
             {

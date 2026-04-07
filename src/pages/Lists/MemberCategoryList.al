@@ -1,5 +1,5 @@
 // ============================================================
-// Page 50104 - Member Category List
+// Page 50110 - Member Category List
 // ============================================================
 // PURPOSE: Shows ALL member categories in a scrollable list.
 //          Categories are like "types" of members:
@@ -11,13 +11,13 @@
 //   This links the List and Card pages together.
 //
 // HOW CATEGORIES ARE USED:
-//   1. Default categories are created on install (by Cod50101)
+//   1. Default categories are created on install (by Cod50107)
 //   2. Admin can add more categories from this list page
 //   3. When creating a Member Application, the user picks
 //      a category from a dropdown (TableRelation)
 // ============================================================
 
-page 50104 "Member Category List"
+page 50110 "Member Category List"
 {
     Caption = 'Member Categories';             // Title shown at the top
     PageType = List;                           // Grid/table format

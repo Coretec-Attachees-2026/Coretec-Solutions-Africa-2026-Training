@@ -1,4 +1,4 @@
-page 50108 "Loan Application Card"
+page 50113 "Loan Application Card"
 {
     Caption = 'Loan Application Card';
     PageType = Card;
@@ -45,7 +45,7 @@ page 50108 "Loan Application Card"
                     // MultiLine = true shows a bigger text box
                 }
             }
-            
+
             group(General)
             {
                 Caption = 'General';

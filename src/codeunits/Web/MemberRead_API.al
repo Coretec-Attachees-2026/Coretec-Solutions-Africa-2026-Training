@@ -1,4 +1,4 @@
-page 50149 "MemberAPI"
+page 50104 "MemberAPI"
 {
     PageType = API;
     APIPublisher = 'lenson';
@@ -19,9 +19,9 @@ page 50149 "MemberAPI"
                 field(no; Rec."Member ID") { }
                 field(name; Rec."First Name") { }
                 field(phone; Rec."Phone Number") { }
-                field(Email;Rec.Email) {}
-                field("Member_Category";Rec."Member Category") {}
-                field(Occupation;Rec.Occupation) {}
+                field(Email; Rec.Email) { }
+                field("Member_Category"; Rec."Member Category") { }
+                field(Occupation; Rec.Occupation) { }
             }
         }
     }

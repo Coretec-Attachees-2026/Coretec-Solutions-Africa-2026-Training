@@ -1,13 +1,13 @@
-page 50129 WelcomeEmailSetupPage
+page 50115 RejectionEmailSetupPage
 {
-    Caption = 'Welcome E-mail setup page';
+    Caption = 'Rejection E-mail setup page';
     PageType = Card;
     ApplicationArea = All;
     UsageCategory = Tasks;
-    SourceTable = WelcomeEmailSetupTable;
+    SourceTable = RejectionEmailSetupTable;
     InsertAllowed = false;
     DeleteAllowed = false;
-
+    
     layout
     {
         area(Content)
@@ -18,17 +18,17 @@ page 50129 WelcomeEmailSetupPage
                 {
                     ExtendedDatatype = RichContent;
                     MultiLine = true;
-
+                    
                     trigger OnValidate()
                     begin
                         Rec.SaveRichText(EmailBodyVar);
                     end;
-
+                    
                 }
             }
         }
     }
-
+    
     actions
     {
         area(Processing)
@@ -42,8 +42,7 @@ page 50129 WelcomeEmailSetupPage
                     Message('This is a sample email format to member with member ID {Member ID} and first Name {First Name} ');
                 end;
             }
-            action(AvailableFields)
-            {
+            action(AvailableFields) {
                 Image = CreateForm;
                 Caption = 'Available Fields';
 
@@ -53,22 +52,6 @@ page 50129 WelcomeEmailSetupPage
                     Message('Proceeds not to code available fields')
                 end;
 
-            }
-
-            action(MemberID)
-            {
-                Caption = 'Member ID';
-                ApplicationArea = All;
-                Image = Link;
-                trigger OnAction()
-                var
-                    Original: Text;
-                begin
-                    Original := Rec.GetRichText();
-                    Original += '{Member ID}';
-                    Rec.SaveRichText(Original);
-                    CurrPage.Update();
-                end;
             }
             action(ApplicationID)
             {
@@ -111,21 +94,6 @@ page 50129 WelcomeEmailSetupPage
                 begin
                     Original := Rec.GetRichText();
                     Original += '{Last Name}';
-                    Rec.SaveRichText(Original);
-                    CurrPage.Update();
-                end;
-            }
-            action(FullName)
-            {
-                Caption = 'Full Name';
-                ApplicationArea = All;
-                Image = User;
-                trigger OnAction()
-                var
-                    Original: Text;
-                begin
-                    Original := Rec.GetRichText();
-                    Original += '{Full Name}';
                     Rec.SaveRichText(Original);
                     CurrPage.Update();
                 end;
@@ -174,7 +142,6 @@ page 50129 WelcomeEmailSetupPage
                     Rec.SaveRichText(Original);
                     CurrPage.Update();
                 end;
-
             }
             action(Address)
             {
@@ -238,7 +205,7 @@ page 50129 WelcomeEmailSetupPage
             }
             action(IDNumber)
             {
-                Caption = 'ID/Passport Number';
+                Caption = 'ID Number';
                 ApplicationArea = All;
                 Image = Certificate;
                 trigger OnAction()
@@ -251,9 +218,9 @@ page 50129 WelcomeEmailSetupPage
                     CurrPage.Update();
                 end;
             }
-            action(RegistrationDate)
+            action(ApplicationDate)
             {
-                Caption = 'Registration Date';
+                Caption = 'Application Date';
                 ApplicationArea = All;
                 Image = DueDate;
                 trigger OnAction()
@@ -261,14 +228,14 @@ page 50129 WelcomeEmailSetupPage
                     Original: Text;
                 begin
                     Original := Rec.GetRichText();
-                    Original += '{Registration Date}';
+                    Original += '{Application Date}';
                     Rec.SaveRichText(Original);
                     CurrPage.Update();
                 end;
             }
             action(Status)
             {
-                Caption = 'Member Status';
+                Caption = 'Status';
                 ApplicationArea = All;
                 Image = Status;
                 trigger OnAction()
@@ -276,7 +243,37 @@ page 50129 WelcomeEmailSetupPage
                     Original: Text;
                 begin
                     Original := Rec.GetRichText();
-                    Original += '{Member Status}';
+                    Original += '{Status}';
+                    Rec.SaveRichText(Original);
+                    CurrPage.Update();
+                end;
+            }
+            action(ApprovalDate)
+            {
+                Caption = 'Approval Date';
+                ApplicationArea = All;
+                Image = DueDate;
+                trigger OnAction()
+                var
+                    Original: Text;
+                begin
+                    Original := Rec.GetRichText();
+                    Original += '{Approval Date}';
+                    Rec.SaveRichText(Original);
+                    CurrPage.Update();
+                end;
+            }
+            action(RejectionReason)
+            {
+                Caption = 'Rejection Reason';
+                ApplicationArea = All;
+                Image = Note;
+                trigger OnAction()
+                var
+                    Original: Text;
+                begin
+                    Original := Rec.GetRichText();
+                    Original += '{Rejection Reason}';
                     Rec.SaveRichText(Original);
                     CurrPage.Update();
                 end;
@@ -327,50 +324,36 @@ page 50129 WelcomeEmailSetupPage
                 end;
             }
 
-
         }
-        area(Promoted)
-        {
-            actionref("Show me how"; ShowMeHow)
-            {
+        area(Promoted) {
+            actionref("Show me how"; ShowMeHow) {
+
+            }
+            actionref("Available Fields"; AvailableFields) {
 
             }
             group(InsertField)
             {
-
-
                 Image = Insert;
                 Caption = 'Insert Field';
 
-                actionref(MemberIDActionref; MemberID)
-                {
-
-                }
                 actionref(ApplicationIDActionref; ApplicationID)
                 {
-
                 }
                 actionref(FirstNameActionref; FirstName)
                 {
                 }
                 actionref(LastNameActionref; LastName)
                 {
-
-                }
-                actionref(FullNameActionref; FullName)
-                {
-
                 }
                 actionref(EmailActionref; Email)
                 {
-
                 }
                 actionref(PhoneNumberActionref; PhoneNumber)
                 {
                 }
                 actionref(DateOfBirthActionref; DateOfBirth)
                 {
-
                 }
                 actionref(AddressActionref; Address)
                 {
@@ -386,30 +369,30 @@ page 50129 WelcomeEmailSetupPage
                 }
                 actionref(IDNumberActionref; IDNumber)
                 {
-
                 }
-                actionref(RegistrationDateActionref; RegistrationDate)
+                actionref(ApplicationDateActionref; ApplicationDate)
                 {
                 }
                 actionref(StatusActionref; Status)
                 {
                 }
+                actionref(ApprovalDateActionref; ApprovalDate)
+                {
+                }
+                actionref(RejectionReasonActionref; RejectionReason)
+                {
+                }
                 actionref(OccupationActionref; Occupation)
                 {
-
                 }
                 actionref(AnnualIncomeActionref; AnnualIncome)
                 {
-
                 }
                 actionref(MemberCategoryActionref; MemberCategory)
                 {
-
                 }
-
             }
         }
-
     }
 
     trigger OnAfterGetCurrRecord()
@@ -419,12 +402,13 @@ page 50129 WelcomeEmailSetupPage
 
     trigger OnOpenPage()
     begin
-        if not Rec.get() then begin
+        if not Rec.get() then
+        begin
             rec.Init();
             rec.Insert();
         end;
     end;
-
+    
     var
         EmailBodyVar: Text;
 }

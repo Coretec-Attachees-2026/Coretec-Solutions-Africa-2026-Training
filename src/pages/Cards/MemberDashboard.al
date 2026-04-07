@@ -1,4 +1,4 @@
-page 50135 "Member Dashboard"
+page 50116 "Member Dashboard"
 // flowfields are better for performace
 {
     PageType = Card;

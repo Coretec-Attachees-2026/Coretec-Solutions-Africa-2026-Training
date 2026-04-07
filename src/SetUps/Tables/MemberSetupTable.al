@@ -1,5 +1,5 @@
 // ============================================================
-// Table 50104 - Member Setup
+// Table 50101 - Member Setup
 // ============================================================
 // PURPOSE: Stores configuration settings for the SACCO system.
 //
@@ -19,7 +19,7 @@
 //     CREDIT "Bank/Disbursement"   (asset goes DOWN - money left our bank)
 // ============================================================
 
-table 50104 "Member Setup"
+table 50101 "Member Setup"
 {
     Caption = 'Member Setup';
     DataClassification = ToBeClassified;

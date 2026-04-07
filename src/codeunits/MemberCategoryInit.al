@@ -1,5 +1,5 @@
 // ============================================================
-// Codeunit 50101 - Member Category Initialization
+// Codeunit 50107 - Member Category Initialization
 // ============================================================
 // PURPOSE: Pre-creates default member categories when the
 //          extension is first installed.
@@ -27,7 +27,7 @@
 //   DORMANT       = Inactive Account
 // ============================================================
 
-codeunit 50101 "Member Category Initialization"
+codeunit 50107 "Member Category Initialization"
 {
     SubType = Install;  // Runs automatically during installation
 

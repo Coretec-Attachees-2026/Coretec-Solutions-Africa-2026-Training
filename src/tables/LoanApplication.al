@@ -1,4 +1,4 @@
-table 50103 "Loan Application"
+table 50105 "Loan Application"
 {
     Caption = 'Loan Application';
     DataClassification = ToBeClassified;

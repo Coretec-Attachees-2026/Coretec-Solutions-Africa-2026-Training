@@ -1,4 +1,4 @@
-xmlport 50127 "Export Member XMLport"
+xmlport 50100 "Export Member XMLport"
 {
     Caption = 'Member XML port';
     Format = Xml;

@@ -1,5 +1,5 @@
 // ============================================================
-// Codeunit 50102 - Member App No. Series Mgt
+// Codeunit 50100 - Member App No. Series Mgt
 // ============================================================
 // PURPOSE: Automatically creates the No. Series for Member Applications.
 //
@@ -26,7 +26,7 @@
 //   creates the series if it doesn't exist.
 // ============================================================
 
-codeunit 50102 "Member App No. Series Mgt"
+codeunit 50100 "Member App No. Series Mgt"
 {
     // Grant this codeunit permission to read/write these tables
     Permissions = tabledata "No. Series" = rimd,

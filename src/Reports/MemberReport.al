@@ -1,10 +1,10 @@
-report 50110 "Member Report"
+report 50100 "Member Report"
 {
     ApplicationArea = All;
     Caption = 'Member Report';
     UsageCategory = ReportsAndAnalysis;
-    RDLCLayout='Item Report.RDL';
-    DefaultLayout=RDLC;
+    RDLCLayout = 'Item Report.RDL';
+    DefaultLayout = RDLC;
     dataset
     {
         dataitem(Member; Member)
@@ -102,4 +102,3 @@ report 50110 "Member Report"
         }
     }
 }
-

@@ -1,4 +1,4 @@
-report 50136 "Loan Summary by Member"
+report 50101 "Loan Summary by Member"
 // uses nested loops
 // gets one member, then gets all loans for that member
 {
@@ -27,7 +27,8 @@ report 50136 "Loan Summary by Member"
             dataitem(JoinWithLoanTable; "Loan Application")
             {
                 DataItemLink = "Member ID" = field("Member ID");
-                column(Loan_Application_No_;"Loan Application No.") {
+                column(Loan_Application_No_; "Loan Application No.")
+                {
 
                 }
                 column(LoanAmount; "Loan Amount")
@@ -89,7 +90,8 @@ report 50136 "Loan Summary by Member"
             LayoutFile = 'LoanSummaryByMember.rdl';
             Caption = 'Loan summary by Member';
         }
-        layout(ExcelLayout) {
+        layout(ExcelLayout)
+        {
             Type = Excel;
             LayoutFile = 'LoanSummaryByMember.xlsx';
             Caption = 'Loan Summary By Member';

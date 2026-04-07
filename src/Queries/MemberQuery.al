@@ -1,4 +1,4 @@
-query 50129 "Member Query"
+query 50100 "Member Query"
 {
     QueryType = Normal;
     Caption = 'Member query';

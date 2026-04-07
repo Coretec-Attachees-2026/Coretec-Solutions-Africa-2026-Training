@@ -132,7 +132,7 @@ page 50103 "Member Card"
     }
 }
 
-page 50138 "Member Loans Part"
+page 50117 "Member Loans Part"
 {
     Caption = 'Member Loans';
     PageType = CardPart;
@@ -160,7 +160,7 @@ page 50138 "Member Loans Part"
 
 }
 
-page 50139 "Member Loans Statistics"
+page 50118 "Member Loans Statistics"
 {
     Caption = 'Integer Statistics';
     PageType = CardPart;

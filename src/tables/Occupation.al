@@ -1,4 +1,4 @@
-table 50140 Occupation
+table 50108 Occupation
 {
     Caption = 'Member occupation';
     DataClassification = ToBeClassified;

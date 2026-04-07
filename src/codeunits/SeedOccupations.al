@@ -1,4 +1,4 @@
-codeunit 50143 "Install Occupations"
+codeunit 50108 "Install Occupations"
 {
     Subtype = Install;
 

@@ -1,5 +1,5 @@
 // ============================================================
-// Page 50109 - Loan Ledger Entries
+// Page 50111 - Loan Ledger Entries
 // ============================================================
 // PURPOSE: Shows a read-only list of all posted loan transactions.
 //
@@ -16,7 +16,7 @@
 //   Entries are only created by the Loan Management codeunit.
 // ============================================================
 
-page 50109 "Loan Ledger Entries"
+page 50111 "Loan Ledger Entries"
 {
     Caption = 'Loan Ledger Entries';
     PageType = List;

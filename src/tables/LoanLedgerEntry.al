@@ -1,5 +1,5 @@
 // ============================================================
-// Table 50105 - Loan Ledger Entry
+// Table 50103 - Loan Ledger Entry
 // ============================================================
 // PURPOSE: Records every loan transaction posted to the General Ledger.
 //
@@ -18,7 +18,7 @@
 //   Each entry gets a unique number automatically.
 // ============================================================
 
-table 50105 "Loan Ledger Entry"
+table 50103 "Loan Ledger Entry"
 {
     Caption = 'Loan Ledger Entry';
     DataClassification = ToBeClassified;

@@ -1,13 +1,13 @@
-page 50130 RejectionEmailSetupPage
+page 50114 WelcomeEmailSetupPage
 {
-    Caption = 'Rejection E-mail setup page';
+    Caption = 'Welcome E-mail setup page';
     PageType = Card;
     ApplicationArea = All;
     UsageCategory = Tasks;
-    SourceTable = RejectionEmailSetupTable;
+    SourceTable = WelcomeEmailSetupTable;
     InsertAllowed = false;
     DeleteAllowed = false;
-    
+
     layout
     {
         area(Content)
@@ -18,17 +18,17 @@ page 50130 RejectionEmailSetupPage
                 {
                     ExtendedDatatype = RichContent;
                     MultiLine = true;
-                    
+
                     trigger OnValidate()
                     begin
                         Rec.SaveRichText(EmailBodyVar);
                     end;
-                    
+
                 }
             }
         }
     }
-    
+
     actions
     {
         area(Processing)
@@ -42,7 +42,8 @@ page 50130 RejectionEmailSetupPage
                     Message('This is a sample email format to member with member ID {Member ID} and first Name {First Name} ');
                 end;
             }
-            action(AvailableFields) {
+            action(AvailableFields)
+            {
                 Image = CreateForm;
                 Caption = 'Available Fields';
 
@@ -52,6 +53,22 @@ page 50130 RejectionEmailSetupPage
                     Message('Proceeds not to code available fields')
                 end;
 
+            }
+
+            action(MemberID)
+            {
+                Caption = 'Member ID';
+                ApplicationArea = All;
+                Image = Link;
+                trigger OnAction()
+                var
+                    Original: Text;
+                begin
+                    Original := Rec.GetRichText();
+                    Original += '{Member ID}';
+                    Rec.SaveRichText(Original);
+                    CurrPage.Update();
+                end;
             }
             action(ApplicationID)
             {
@@ -94,6 +111,21 @@ page 50130 RejectionEmailSetupPage
                 begin
                     Original := Rec.GetRichText();
                     Original += '{Last Name}';
+                    Rec.SaveRichText(Original);
+                    CurrPage.Update();
+                end;
+            }
+            action(FullName)
+            {
+                Caption = 'Full Name';
+                ApplicationArea = All;
+                Image = User;
+                trigger OnAction()
+                var
+                    Original: Text;
+                begin
+                    Original := Rec.GetRichText();
+                    Original += '{Full Name}';
                     Rec.SaveRichText(Original);
                     CurrPage.Update();
                 end;
@@ -142,6 +174,7 @@ page 50130 RejectionEmailSetupPage
                     Rec.SaveRichText(Original);
                     CurrPage.Update();
                 end;
+
             }
             action(Address)
             {
@@ -205,7 +238,7 @@ page 50130 RejectionEmailSetupPage
             }
             action(IDNumber)
             {
-                Caption = 'ID Number';
+                Caption = 'ID/Passport Number';
                 ApplicationArea = All;
                 Image = Certificate;
                 trigger OnAction()
@@ -218,9 +251,9 @@ page 50130 RejectionEmailSetupPage
                     CurrPage.Update();
                 end;
             }
-            action(ApplicationDate)
+            action(RegistrationDate)
             {
-                Caption = 'Application Date';
+                Caption = 'Registration Date';
                 ApplicationArea = All;
                 Image = DueDate;
                 trigger OnAction()
@@ -228,14 +261,14 @@ page 50130 RejectionEmailSetupPage
                     Original: Text;
                 begin
                     Original := Rec.GetRichText();
-                    Original += '{Application Date}';
+                    Original += '{Registration Date}';
                     Rec.SaveRichText(Original);
                     CurrPage.Update();
                 end;
             }
             action(Status)
             {
-                Caption = 'Status';
+                Caption = 'Member Status';
                 ApplicationArea = All;
                 Image = Status;
                 trigger OnAction()
@@ -243,37 +276,7 @@ page 50130 RejectionEmailSetupPage
                     Original: Text;
                 begin
                     Original := Rec.GetRichText();
-                    Original += '{Status}';
-                    Rec.SaveRichText(Original);
-                    CurrPage.Update();
-                end;
-            }
-            action(ApprovalDate)
-            {
-                Caption = 'Approval Date';
-                ApplicationArea = All;
-                Image = DueDate;
-                trigger OnAction()
-                var
-                    Original: Text;
-                begin
-                    Original := Rec.GetRichText();
-                    Original += '{Approval Date}';
-                    Rec.SaveRichText(Original);
-                    CurrPage.Update();
-                end;
-            }
-            action(RejectionReason)
-            {
-                Caption = 'Rejection Reason';
-                ApplicationArea = All;
-                Image = Note;
-                trigger OnAction()
-                var
-                    Original: Text;
-                begin
-                    Original := Rec.GetRichText();
-                    Original += '{Rejection Reason}';
+                    Original += '{Member Status}';
                     Rec.SaveRichText(Original);
                     CurrPage.Update();
                 end;
@@ -324,36 +327,50 @@ page 50130 RejectionEmailSetupPage
                 end;
             }
 
-        }
-        area(Promoted) {
-            actionref("Show me how"; ShowMeHow) {
 
-            }
-            actionref("Available Fields"; AvailableFields) {
+        }
+        area(Promoted)
+        {
+            actionref("Show me how"; ShowMeHow)
+            {
 
             }
             group(InsertField)
             {
+
+
                 Image = Insert;
                 Caption = 'Insert Field';
 
+                actionref(MemberIDActionref; MemberID)
+                {
+
+                }
                 actionref(ApplicationIDActionref; ApplicationID)
                 {
+
                 }
                 actionref(FirstNameActionref; FirstName)
                 {
                 }
                 actionref(LastNameActionref; LastName)
                 {
+
+                }
+                actionref(FullNameActionref; FullName)
+                {
+
                 }
                 actionref(EmailActionref; Email)
                 {
+
                 }
                 actionref(PhoneNumberActionref; PhoneNumber)
                 {
                 }
                 actionref(DateOfBirthActionref; DateOfBirth)
                 {
+
                 }
                 actionref(AddressActionref; Address)
                 {
@@ -369,30 +386,30 @@ page 50130 RejectionEmailSetupPage
                 }
                 actionref(IDNumberActionref; IDNumber)
                 {
+
                 }
-                actionref(ApplicationDateActionref; ApplicationDate)
+                actionref(RegistrationDateActionref; RegistrationDate)
                 {
                 }
                 actionref(StatusActionref; Status)
                 {
                 }
-                actionref(ApprovalDateActionref; ApprovalDate)
-                {
-                }
-                actionref(RejectionReasonActionref; RejectionReason)
-                {
-                }
                 actionref(OccupationActionref; Occupation)
                 {
+
                 }
                 actionref(AnnualIncomeActionref; AnnualIncome)
                 {
+
                 }
                 actionref(MemberCategoryActionref; MemberCategory)
                 {
+
                 }
+
             }
         }
+
     }
 
     trigger OnAfterGetCurrRecord()
@@ -402,13 +419,12 @@ page 50130 RejectionEmailSetupPage
 
     trigger OnOpenPage()
     begin
-        if not Rec.get() then
-        begin
+        if not Rec.get() then begin
             rec.Init();
             rec.Insert();
         end;
     end;
-    
+
     var
         EmailBodyVar: Text;
 }
