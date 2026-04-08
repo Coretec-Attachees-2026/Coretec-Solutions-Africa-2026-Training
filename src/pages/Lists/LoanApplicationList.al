@@ -1,25 +1,3 @@
-// ============================================================
-// Page 50112 - Loan Application List
-// ============================================================
-// PURPOSE: Shows ALL loan applications in a grid/list format.
-//
-// KEY CONCEPT - "PageType = List":
-//   A List page shows multiple records in rows and columns.
-//   When you click on a row, it opens the Card page for that record.
-//
-// KEY CONCEPT - "CardPageId":
-//   Tells BC which Card page to open when you click a row.
-//   Here it opens "Loan Application Card" (Page 50108).
-//
-// KEY CONCEPT - "UsageCategory = Lists":
-//   This makes the page appear in the Business Central search bar
-//   when users type "Loan Application".
-//
-// KEY CONCEPT - "Editable = false":
-//   You can't edit records directly on the list.
-//   You must open the Card page to edit.
-// ============================================================
-
 page 50112 "Loan Application List"
 {
     Caption = 'Loan Applications';
@@ -27,8 +5,6 @@ page 50112 "Loan Application List"
     SourceTable = "Loan Application";
     ApplicationArea = All;
     UsageCategory = Lists;
-    // CardPageId links this list to the card page
-    // Double-clicking a row opens the card
     CardPageId = "Loan Application Card";
     Editable = false;
 
@@ -38,9 +14,6 @@ page 50112 "Loan Application List"
         {
             repeater(LoanLines)
             {
-                // "repeater" is what creates the grid/table of rows
-                // Each field below becomes a column
-
                 field("Loan Application No."; Rec."Loan Application No.")
                 {
                     ToolTip = 'The unique loan application number.';
@@ -84,6 +57,13 @@ page 50112 "Loan Application List"
                 }
             }
         }
+        // area(FactBoxes) {
+        //     systempart("Reviewer Notes"; Notes) {
+        //         Caption = 'Add Reviewer Notes';
+        //         ApplicationArea = All;
+        //     }
+        // }
+        // add an action to add reviewer notes instead
     }
 
     actions
@@ -104,21 +84,50 @@ page 50112 "Loan Application List"
                 Image = Setup;
                 RunObject = page "Member Setup";
             }
+            action(MoveApplication) {
+                Caption = 'Move Application';
+                Image = AdjustEntries;
+                trigger OnAction()
+                var
+                    LoanManager: Codeunit "Loan Management";
+                    SelectedRecord: Record "Loan Application";
+                begin
+                    CurrPage.SetSelectionFilter(SelectedRecord);
+                    if LoanManager.RunLoanBulkActionMoveStatus(SelectedRecord) = true then begin
+                        SelectedRecord."Reviewer Notes" := ReviewerNotesGlobal;
+                        Message('Loan Applications Moved Successfully');
+                    end;
+                end;
+            }
+            action("Add Reviewer Notes") {
+                Caption = 'Add Reviewer Notes';
+                
+                trigger OnAction()
+                var
+                    myInt: Integer;
+                    RunObject: page "Loan Reviewer Notes";
+                begin
+                    if RunObject.RunModal() = Action::OK then begin
+                        ReviewerNotesGlobal := RunObject.GetEnteredText();
+                    end;
+                    
+                end;
+            }
         }
         area(Promoted)
         {
-            group(Category_Navigate)
-            {
-                Caption = 'Navigate';
                 actionref(LoanLedgerEntries_Promoted; LoanLedgerEntries) { }
                 actionref(MemberSetup_Promoted; MemberSetup) { }
-            }
-        }
-    }
+                actionref(MoveApplication_promoted; MoveApplication) {}
+                actionref(AddReviewerNotes_promoted; "Add Reviewer Notes") {
 
-    // Status styling - same as the Card page
+                }
+        }
+
+    }
     var
         StatusStyle: Text;
+        ReviewerNotesGlobal: Text;
 
     trigger OnAfterGetRecord()
     begin
@@ -134,5 +143,48 @@ page 50112 "Loan Application List"
             Enum::"Loan Application Status"::Disbursed:
                 StatusStyle := 'Favorable';
         end;
+    end;
+}
+
+// page 50121 "Reviewer Notes Part"
+// {
+//     PageType = ListPart;
+//     ApplicationArea = All;
+//     UsageCategory = Lists;
+//     SourceTable = "Loan Application";
+    
+//     layout
+//     {
+//         area(Content)
+//         {
+//             repeater(Reviewer Notes)
+//             {
+//                 field(Name; NameSource)
+//                 {
+                    
+//                 }
+//             }
+//         }
+
+//     }
+// }
+
+page 50122 "Loan Reviewer Notes"
+{
+    PageType = PromptDialog;
+    Extensible = false;
+    ApplicationArea = all;
+    layout {
+        area(Content) {
+            field("Reviewer Notes Input"; "Reviewer Notes") {
+
+            }
+        }
+    }
+    var
+        "Reviewer Notes": Text;
+    procedure GetEnteredText(): Text
+    begin
+        exit("Reviewer Notes");
     end;
 }

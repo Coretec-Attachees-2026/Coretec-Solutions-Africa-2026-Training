@@ -203,4 +203,12 @@ codeunit 50105 "Loan Management"
         end;
         exit(false);
     end;
+    procedure RunLoanBulkActionMoveStatus(var SelectedRecord: Record "Loan Application"): Boolean
+    begin
+        if SelectedRecord.FindSet() then begin
+            repeat
+
+            until SelectedRecord.Next() = 0
+        end;
+    end;
 }
