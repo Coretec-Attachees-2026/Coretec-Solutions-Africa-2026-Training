@@ -26,7 +26,7 @@ permissionset 50130 "CORETEC-TELLER"
 
     Permissions =
         // Member Application
-        table "Member Application" = X,
+        table "Member Application" = x,
         page "Member Application List" = X,
         page "Member Application Card" = X,
 

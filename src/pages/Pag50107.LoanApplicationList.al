@@ -88,6 +88,103 @@ page 50107 "Loan Application List"
 
     actions
     {
+        area(Processing)
+        {
+            group(BulkActions)
+            {
+                Caption = 'Bulk Actions';
+                ToolTip = 'Apply operations to multiple selected loan applications at once.';
+                Image = Action;
+
+                action(BulkMoveToUnderReview)
+                {
+                    Caption = 'Move Selected to Under Review';
+                    ToolTip = 'Move all selected applications from Open to Pending Approval.';
+                    Image = Approve;
+
+                    trigger OnAction()
+                    var
+                        LoanApp: Record "Loan Application";
+                        BulkProcessor: Codeunit "Loan Bulk Processing";
+                    begin
+                        CurrPage.SetSelectionFilter(LoanApp);
+                        BulkProcessor.BulkUpdateLoanStatus(
+                            LoanApp,
+                            Enum::"Loan Application Status"::Open,
+                            Enum::"Loan Application Status"::"Pending Approval",
+                            'Bulk moved to Under Review'
+                        );
+                        CurrPage.Update(false);
+                    end;
+                }
+
+                action(BulkApprove)
+                {
+                    Caption = 'Approve Selected';
+                    ToolTip = 'Approve all selected applications (move from Pending Approval to Approved).';
+                    Image = Approve;
+
+                    trigger OnAction()
+                    var
+                        LoanApp: Record "Loan Application";
+                        BulkProcessor: Codeunit "Loan Bulk Processing";
+                    begin
+                        CurrPage.SetSelectionFilter(LoanApp);
+                        BulkProcessor.BulkUpdateLoanStatus(
+                            LoanApp,
+                            Enum::"Loan Application Status"::"Pending Approval",
+                            Enum::"Loan Application Status"::Approved,
+                            'Bulk approved by loan officer'
+                        );
+                        CurrPage.Update(false);
+                    end;
+                }
+
+                action(BulkReject)
+                {
+                    Caption = 'Reject Selected';
+                    ToolTip = 'Reject all selected applications (move from Pending Approval to Rejected).';
+                    Image = Reject;
+
+                    trigger OnAction()
+                    var
+                        LoanApp: Record "Loan Application";
+                        BulkProcessor: Codeunit "Loan Bulk Processing";
+                    begin
+                        CurrPage.SetSelectionFilter(LoanApp);
+                        BulkProcessor.BulkUpdateLoanStatus(
+                            LoanApp,
+                            Enum::"Loan Application Status"::"Pending Approval",
+                            Enum::"Loan Application Status"::Rejected,
+                            'Bulk rejected by loan officer'
+                        );
+                        CurrPage.Update(false);
+                    end;
+                }
+
+                action(BulkMarkDisbursed)
+                {
+                    Caption = 'Mark Selected as Disbursed';
+                    ToolTip = 'Mark all selected applications as disbursed (Approved → Disbursed).';
+                    Image = Post;
+
+                    trigger OnAction()
+                    var
+                        LoanApp: Record "Loan Application";
+                        BulkProcessor: Codeunit "Loan Bulk Processing";
+                    begin
+                        CurrPage.SetSelectionFilter(LoanApp);
+                        BulkProcessor.BulkUpdateLoanStatus(
+                            LoanApp,
+                            Enum::"Loan Application Status"::Approved,
+                            Enum::"Loan Application Status"::Disbursed,
+                            'Bulk marked as disbursed'
+                        );
+                        CurrPage.Update(false);
+                    end;
+                }
+            }
+        }
         area(Navigation)
         {
             action(LoanLedgerEntries)
@@ -96,6 +193,13 @@ page 50107 "Loan Application List"
                 ToolTip = 'View all loan ledger entries.';
                 Image = LedgerEntries;
                 RunObject = page "Loan Ledger Entries";
+            }
+            action(AuditLog)
+            {
+                Caption = 'Audit Log';
+                ToolTip = 'View all changes made to loan applications.';
+                Image = Log;
+                RunObject = page "Loan Application Audit Log";
             }
             action(MemberSetup)
             {
@@ -107,10 +211,19 @@ page 50107 "Loan Application List"
         }
         area(Promoted)
         {
+            group(Category_Process)
+            {
+                Caption = 'Process';
+                actionref(BulkMoveToUnderReview_Promoted; BulkMoveToUnderReview) { }
+                actionref(BulkApprove_Promoted; BulkApprove) { }
+                actionref(BulkReject_Promoted; BulkReject) { }
+                actionref(BulkMarkDisbursed_Promoted; BulkMarkDisbursed) { }
+            }
             group(Category_Navigate)
             {
                 Caption = 'Navigate';
                 actionref(LoanLedgerEntries_Promoted; LoanLedgerEntries) { }
+                actionref(AuditLog_Promoted; AuditLog) { }
                 actionref(MemberSetup_Promoted; MemberSetup) { }
             }
         }
