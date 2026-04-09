@@ -203,12 +203,32 @@ codeunit 50105 "Loan Management"
         end;
         exit(false);
     end;
-    procedure RunLoanBulkActionMoveStatus(var SelectedRecord: Record "Loan Application"): Boolean
+    procedure RunLoanBulkActionMoveStatus(var SelectedRecord: Record "Loan Application"; "Reviewer Notes": Text): Integer
+    var
+        ChangeCount: Integer;
+        RunObject: page "Loan Reviewer Notes";
+        AuditLogRecord: Record "Loan Application Audit Log";
     begin
         if SelectedRecord.FindSet() then begin
             repeat
+                SelectedRecord."Reviewer Notes" := "Reviewer Notes";
+                if SelectedRecord.Status = "Loan Application Status"::"Pending Approval" then begin
+                    SelectedRecord.Status := "Loan Application Status"::Approved;
+                    if SelectedRecord.Modify() = true then begin
+                        // add the changes to the audit log
+                        AuditLogRecord.Init();
+                        AuditLogRecord.Auditor := UserId;
+                        AuditLogRecord."Loan Application ID" := SelectedRecord."Loan Application No.";
+                        AuditLogRecord.StatusFrom := "Loan Application Status"::"Pending Approval";
+                        AuditLogRecord.StatusTo := "Loan Application Status"::Approved;
+                        AuditLogRecord.Insert();
+                        Clear(AuditLogRecord);
+                    end;
 
-            until SelectedRecord.Next() = 0
+                    ChangeCount += 1;
+                end;
+            until SelectedRecord.Next() = 0;
+            exit(ChangeCount);
         end;
     end;
 }

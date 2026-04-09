@@ -91,11 +91,25 @@ page 50112 "Loan Application List"
                 var
                     LoanManager: Codeunit "Loan Management";
                     SelectedRecord: Record "Loan Application";
+                    ChangeCount: Integer;
+                    RunObject: page "Loan Reviewer Notes";
                 begin
+                    if ReviewerNotesGlobal = '' then begin
+                        if Confirm('You don''t have Reviwer Notes, would you like to add some?') then
+                            if RunObject.RunModal() = Action::OK then begin
+                                ReviewerNotesGlobal := RunObject.GetEnteredText();
+                            end
+                        else begin
+                            Message('Approvals will be audited without reviewer notes');
+                        end;
+                    end;
                     CurrPage.SetSelectionFilter(SelectedRecord);
-                    if LoanManager.RunLoanBulkActionMoveStatus(SelectedRecord) = true then begin
-                        SelectedRecord."Reviewer Notes" := ReviewerNotesGlobal;
-                        Message('Loan Applications Moved Successfully');
+                    ChangeCount := LoanManager.RunLoanBulkActionMoveStatus(SelectedRecord, ReviewerNotesGlobal);
+                    if ChangeCount <> 0 then begin
+                        Message(Format(ChangeCount) + ' Loan Applications Moved');
+                    end else begin
+                        Message(Format(ChangeCount) + ' Loan Applications Approved Successfully');
+                        CurrPage.Update();
                     end;
                 end;
             }
