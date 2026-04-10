@@ -90,6 +90,32 @@ page 50107 "Loan Application List"
     {
         area(Processing)
         {
+            action(BulkApprove)
+            {
+                Caption = 'Bulk Approve & Disburse';
+                ToolTip = 'Approve and disburse all selected loans. Only loans in "Pending Approval" status will be processed.';
+                Image = Approve;
+
+                trigger OnAction()
+                var
+                    LoanApp: Record "Loan Application";
+                    BulkLoanMgt: Codeunit "Bulk Loan Approval Mgt";
+                begin
+                    // Step 1: Get all selected records from the list
+                    CurrPage.SetSelectionFilter(LoanApp);
+
+                    // Step 2: Validate that at least one record is selected
+                    if not BulkLoanMgt.ValidateSelection(LoanApp) then
+                        exit;
+
+                    // Step 3: Process the bulk approval
+                    BulkLoanMgt.ApproveSelected(LoanApp);
+
+                    // Step 4: Refresh the page to show updated statuses
+                    CurrPage.Update(false);
+                end;
+            }
+
             action(LoanSummaryReport)
             {
                 Caption = 'Loan Summary by Member';
@@ -107,6 +133,13 @@ page 50107 "Loan Application List"
                 Image = LedgerEntries;
                 RunObject = page "Loan Ledger Entries";
             }
+            action(AuditLog)
+            {
+                Caption = 'Bulk Operation Audit Log';
+                ToolTip = 'View audit log of all bulk operations performed on loan applications.';
+                Image = Approve;
+                RunObject = page "Audit Log Entries";
+            }
             action(MemberSetup)
             {
                 Caption = 'Loan Setup';
@@ -120,12 +153,14 @@ page 50107 "Loan Application List"
             group(Category_Process)
             {
                 Caption = 'Process';
+                actionref(BulkApprove_Promoted; BulkApprove) { }
                 actionref(LoanSummaryReport_Promoted; LoanSummaryReport) { }
             }
             group(Category_Navigate)
             {
                 Caption = 'Navigate';
                 actionref(LoanLedgerEntries_Promoted; LoanLedgerEntries) { }
+                actionref(AuditLog_Promoted; AuditLog) { }
                 actionref(MemberSetup_Promoted; MemberSetup) { }
             }
         }
