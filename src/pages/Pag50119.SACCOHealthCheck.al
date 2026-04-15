@@ -372,6 +372,20 @@ page 50119 "SACCO Health Check"
                 end;
             }
 
+            action(OpenDataQuality)
+            {
+                Caption = 'Data Quality Finder';
+                Image = CheckList;
+                Promoted = true;
+                PromotedCategory = Process;
+                ToolTip = 'Analyze data quality issues: duplicate emails, orphaned loans, stalled applications';
+
+                trigger OnAction()
+                begin
+                    Page.Run(Page::"Data Quality Findings");
+                end;
+            }
+
             action(OpenMemberSetup)
             {
                 Caption = 'Open Member Setup';
