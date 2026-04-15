@@ -121,7 +121,7 @@ codeunit 50104 "Member Management"
         exit('MEM-' + Format(Today, 0, '<Year4><Month,2><Day,2>') + '-' + Format(MemberCount, 0, '<Integer,4>'));
     end;
 
-    procedure SendWelcomeEmailToMember(Member: Record Member)
+    procedure SendWelcomeEmailToMember(Member: Record Member): Boolean
     var
         EmailMessage: Codeunit "Email Message";
         Email: Codeunit Email;
@@ -137,7 +137,6 @@ codeunit 50104 "Member Management"
         EmailMessage.Create(Member."Email", Subject, Body, true);
         if not Email.Send(EmailMessage) then
             Message('Member created successfully, but the welcome email could not be sent. Please check Email Account setup (search "Email Accounts")');
-
     end;
 
     procedure SendRejectionEmailToMember(Member: Record "Member Application")

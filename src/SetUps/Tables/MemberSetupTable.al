@@ -1,24 +1,3 @@
-// ============================================================
-// Table 50101 - Member Setup
-// ============================================================
-// PURPOSE: Stores configuration settings for the SACCO system.
-//
-// This is a "single-record" table - there's only ever ONE row
-// with Primary Key = 'SETUP'. This pattern is common in BC for
-// storing global settings.
-//
-// WHAT'S NEW FOR LOANS:
-// - "Loan Application Nos."    → No. Series for generating loan IDs
-// - "Loans Receivable Account" → G/L Account where we DEBIT (loan given out)
-// - "Loan Disbursement Account"→ G/L Account where we CREDIT (money leaves bank)
-//
-// WHY TWO G/L ACCOUNTS?
-//   Double-entry bookkeeping: every transaction must have equal debits and credits.
-//   When we give a loan:
-//     DEBIT  "Loans Receivable"    (asset goes UP - member owes us money)
-//     CREDIT "Bank/Disbursement"   (asset goes DOWN - money left our bank)
-// ============================================================
-
 table 50101 "Member Setup"
 {
     Caption = 'Member Setup';
