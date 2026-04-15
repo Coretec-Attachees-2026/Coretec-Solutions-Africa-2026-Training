@@ -21,7 +21,7 @@
 //
 // ============================================================
 
-codeunit 50108 "Africa's Talking SMS"
+codeunit 50109 "Africa's Talking SMS"
 {
     /// <summary>
     /// SendApprovalSMS

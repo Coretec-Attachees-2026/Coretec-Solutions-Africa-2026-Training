@@ -62,6 +62,20 @@ page 50106 "Member Setup"
     {
         area(Processing)
         {
+            action("SACCO Health Check")
+            {
+                Caption = 'SACCO Health Check';
+                ToolTip = 'Run system configuration health checks. View pass/fail status for all critical settings and get recommendations for fixes.';
+                Image = CheckList;
+                Promoted = true;
+                PromotedCategory = Process;
+
+                trigger OnAction()
+                begin
+                    Page.Run(Page::"SACCO Health Check");
+                end;
+            }
+
             action("View Dashboard")
             {
                 Caption = 'View Dashboard';
