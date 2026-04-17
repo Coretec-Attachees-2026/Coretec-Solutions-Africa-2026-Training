@@ -1,28 +1,3 @@
-// ============================================================
-// Page 50121 - Data Quality Findings
-// ============================================================
-// PURPOSE: Displays data quality issues found by the
-//          Data Quality Management Codeunit (50111).
-//
-// USER EXPERIENCE:
-//   1. User opens this page via an action from another page
-//   2. Click "Analyze Now" to run all data quality checks
-//   3. View issues organized by type and severity
-//   4. Click on an issue to drill down to the affected record
-//   5. Each issue shows: Type, Severity, Description, Recommendation
-//
-// DRILL-DOWN ACTIONS:
-//   - Member ID drilldown → Opens Member Card
-//   - Loan Application No. drilldown → Opens Loan App Card
-//   - "Open Record" button → Direct link based on issue type
-//
-// STYLING:
-//   - Red background for "Critical" severity
-//   - Yellow background for "Warning" severity
-//   - Green background for "Info" severity
-//
-// ============================================================
-
 page 50121 "Data Quality Findings"
 {
     Caption = 'Data Quality Findings';
@@ -44,6 +19,7 @@ page 50121 "Data Quality Findings"
                 {
                     ToolTip = 'Type of data quality issue detected';
                     Width = 20;
+                    ApplicationArea = All;
                 }
 
                 field("Severity"; Rec."Severity")
@@ -51,12 +27,14 @@ page 50121 "Data Quality Findings"
                     ToolTip = 'Severity level: Critical, Warning, Info';
                     StyleExpr = SeverityStyle;
                     Width = 15;
+                    ApplicationArea = All;
                 }
 
                 field("Description"; Rec."Description")
                 {
                     ToolTip = 'Detailed description of the issue';
                     Width = 50;
+                    ApplicationArea = All;
                 }
 
                 field("Affected Count"; Rec."Affected Count")
@@ -64,6 +42,7 @@ page 50121 "Data Quality Findings"
                     ToolTip = 'Number of records affected (for duplicate emails)';
                     Width = 12;
                     Visible = ShowAffectedCount;
+                    ApplicationArea = All;
                 }
 
                 field("Days in Status"; Rec."Days in Status")
@@ -71,12 +50,14 @@ page 50121 "Data Quality Findings"
                     ToolTip = 'Number of days stuck in current status (for stalled apps)';
                     Width = 12;
                     Visible = ShowDaysInStatus;
+                    ApplicationArea = All;
                 }
 
                 field("Member ID"; Rec."Member ID")
                 {
                     ToolTip = 'Affected member (clickable for drill-down)';
                     Width = 15;
+                    ApplicationArea = All;
 
                     trigger OnDrillDown()
                     begin
@@ -89,12 +70,14 @@ page 50121 "Data Quality Findings"
                 {
                     ToolTip = 'Email address involved in the issue';
                     Width = 25;
+                    ApplicationArea = All;
                 }
 
                 field("Loan Application No."; Rec."Loan Application No.")
                 {
                     ToolTip = 'Loan application involved (clickable for drill-down)';
                     Width = 18;
+                    ApplicationArea = All;
 
                     trigger OnDrillDown()
                     begin
@@ -107,12 +90,14 @@ page 50121 "Data Quality Findings"
                 {
                     ToolTip = 'Recommended action to fix this issue';
                     Width = 60;
+                    ApplicationArea = All;
                 }
 
                 field("Status Since Date"; Rec."Status Since Date")
                 {
                     ToolTip = 'Date when the record entered this status';
                     Width = 15;
+                    ApplicationArea = All;
                 }
             }
         }
@@ -138,14 +123,16 @@ page 50121 "Data Quality Findings"
                 Image = Refresh;
                 Promoted = true;
                 PromotedCategory = Process;
+                ApplicationArea = All;
 
                 trigger OnAction()
                 var
                     DataQual: Codeunit "Data Quality Management";
+                    IssueCount: Integer;
                 begin
-                    Rec.DeleteAll();  // Clear previous results
-                    DataQual.RunDataQualityChecks(Rec);
-                    Message('%1 data quality issues found.', Rec.Count);
+                    IssueCount := DataQual.RunDataQualityChecks(Rec);
+                    CurrPage.SummaryFactBox.Page.SetSummary(Rec);
+                    Message('%1 data quality issues found.', IssueCount);
                     CurrPage.Update(false);
                 end;
             }
@@ -157,6 +144,7 @@ page 50121 "Data Quality Findings"
                 Image = Open;
                 Promoted = true;
                 PromotedCategory = Category4;
+                ApplicationArea = All;
 
                 trigger OnAction()
                 begin
@@ -178,6 +166,7 @@ page 50121 "Data Quality Findings"
                 Image = Filter;
                 Promoted = true;
                 PromotedCategory = Category5;
+                ApplicationArea = All;
 
                 trigger OnAction()
                 begin
@@ -196,6 +185,7 @@ page 50121 "Data Quality Findings"
                 Image = ClearFilter;
                 Promoted = true;
                 PromotedCategory = Category5;
+                ApplicationArea = All;
 
                 trigger OnAction()
                 begin
@@ -213,15 +203,11 @@ page 50121 "Data Quality Findings"
                 Image = Export;
                 Promoted = true;
                 PromotedCategory = Category6;
+                ApplicationArea = All;
 
                 trigger OnAction()
                 begin
-                    // Export feature would be implemented with ExcelBuffer
-                    // For now, show message with count
-                    if Rec.Count = 0 then
-                        Message('No issues to export. Run "Analyze Now" first.')
-                    else
-                        Message('Ready to export %1 data quality issues. Use Excel Buffer export in enhanced version.', Rec.Count);
+                    ExportToExcelBuffer();
                 end;
             }
         }
@@ -233,6 +219,7 @@ page 50121 "Data Quality Findings"
                 Caption = 'Go to Member';
                 ToolTip = 'Open the Member Card for this row';
                 Image = Navigate;
+                ApplicationArea = All;
 
                 trigger OnAction()
                 begin
@@ -248,6 +235,7 @@ page 50121 "Data Quality Findings"
                 Caption = 'Go to Loan Application';
                 ToolTip = 'Open the Loan Application Card for this row';
                 Image = Navigate;
+                ApplicationArea = All;
 
                 trigger OnAction()
                 begin
@@ -271,10 +259,6 @@ page 50121 "Data Quality Findings"
         UpdateVisibility();
     end;
 
-    // ================================================================
-    // LOCAL PROCEDURES
-    // ================================================================
-
     local procedure OpenMemberCard(MemberID: Code[20])
     var
         Member: Record "Member";
@@ -297,10 +281,7 @@ page 50121 "Data Quality Findings"
 
     local procedure UpdateVisibility()
     begin
-        // Show Affected Count only for Duplicate Email issues
         ShowAffectedCount := (Rec."Issue Type" = 'Duplicate Email');
-
-        // Show Days in Status only for Stalled Application issues
         ShowDaysInStatus := (Rec."Issue Type" = 'Stalled Application');
     end;
 
@@ -308,12 +289,70 @@ page 50121 "Data Quality Findings"
     begin
         case Rec."Severity" of
             'Critical':
-                SeverityStyle := 'Attention';  // Red
+                SeverityStyle := 'Attention';
             'Warning':
-                SeverityStyle := 'Favorable';  // Green
+                SeverityStyle := 'Favorable';
             else
-                SeverityStyle := 'Standard';   // Default
+                SeverityStyle := 'Standard';
         end;
+    end;
+
+    local procedure ExportToExcelBuffer()
+    var
+        IssueRec: Record "Data Quality Issue";
+        ExcelBuffer: Record "Excel Buffer" temporary;
+        FileName: Text;
+    begin
+        if Rec.Count = 0 then begin
+            Message('No issues to export. Run "Analyze Now" first.');
+            exit;
+        end;
+
+        // Initialize Excel Buffer
+        ExcelBuffer.DeleteAll();
+
+        // Add header row
+        ExcelBuffer.NewRow();
+        ExcelBuffer.AddColumn('Issue ID', false, '', true, false, false, '', 0);
+        ExcelBuffer.AddColumn('Issue Type', false, '', true, false, false, '', 0);
+        ExcelBuffer.AddColumn('Severity', false, '', true, false, false, '', 0);
+        ExcelBuffer.AddColumn('Description', false, '', true, false, false, '', 0);
+        ExcelBuffer.AddColumn('Member ID', false, '', true, false, false, '', 0);
+        ExcelBuffer.AddColumn('Member Email', false, '', true, false, false, '', 0);
+        ExcelBuffer.AddColumn('Loan Application No.', false, '', true, false, false, '', 0);
+        ExcelBuffer.AddColumn('Affected Count', false, '', true, false, false, '', 0);
+        ExcelBuffer.AddColumn('Days in Status', false, '', true, false, false, '', 0);
+        ExcelBuffer.AddColumn('Status Since Date', false, '', true, false, false, '', 0);
+        ExcelBuffer.AddColumn('Recommendation', false, '', true, false, false, '', 0);
+
+        // Copy issues to ExcelBuffer
+        IssueRec.Copy(Rec, true);
+        IssueRec.Reset();
+
+        if IssueRec.FindSet() then
+            repeat
+                ExcelBuffer.NewRow();
+                ExcelBuffer.AddColumn(Format(IssueRec."Issue ID"), false, '', false, false, false, '', 0);
+                ExcelBuffer.AddColumn(IssueRec."Issue Type", false, '', false, false, false, '', 0);
+                ExcelBuffer.AddColumn(IssueRec."Severity", false, '', false, false, false, '', 0);
+                ExcelBuffer.AddColumn(IssueRec."Description", false, '', false, false, false, '', 0);
+                ExcelBuffer.AddColumn(IssueRec."Member ID", false, '', false, false, false, '', 0);
+                ExcelBuffer.AddColumn(IssueRec."Member Email", false, '', false, false, false, '', 0);
+                ExcelBuffer.AddColumn(IssueRec."Loan Application No.", false, '', false, false, false, '', 0);
+                ExcelBuffer.AddColumn(Format(IssueRec."Affected Count"), false, '', false, false, false, '', 0);
+                ExcelBuffer.AddColumn(Format(IssueRec."Days in Status"), false, '', false, false, false, '', 0);
+                ExcelBuffer.AddColumn(Format(IssueRec."Status Since Date"), false, '', false, false, false, '', 0);
+                ExcelBuffer.AddColumn(IssueRec."Recommendation", false, '', false, false, false, '', 0);
+            until IssueRec.Next() = 0;
+
+        // Generate Excel file with timestamp
+        FileName := 'Data Quality Issues ' + Format(Today, 0, '<Year4><Month,2><Day,2>') + '.xlsx';
+        ExcelBuffer.CreateNewBook(FileName);
+        ExcelBuffer.WriteSheet(FileName, '', '');
+        ExcelBuffer.CloseBook();
+        ExcelBuffer.OpenExcel();
+
+        Message('Successfully exported %1 data quality issues to Excel.', IssueRec.Count);
     end;
 
     var
