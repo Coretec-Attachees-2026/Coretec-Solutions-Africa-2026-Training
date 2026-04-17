@@ -156,6 +156,20 @@ page 50121 "SACCO Health Check"
                     Page.Run(6308); // Standard Email Account page ID in BC
                 end;
             }
+
+            action(OpenDataQualityFinder)
+            {
+                Caption = 'Data Quality Analysis';
+                ToolTip = 'Run data quality checks to find duplicate emails, orphaned loans, and stuck applications.';
+                Image = Refresh;
+                Promoted = true;
+                PromotedCategory = Process;
+
+                trigger OnAction()
+                begin
+                    Page.Run(Page::"Data Quality Finder");
+                end;
+            }
         }
     }
 
